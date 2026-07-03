@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>翻到就死</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Top Navigation Bar -->
+<nav class="top-nav">
+  <h1 id="navBrand" onclick="goHome()" style="cursor:pointer;">🃏 翻到就死 <span style="font-size:0.6em; color:#888; font-weight:normal;">线下聚会版</span></h1>
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="showLeaderboard()">🏆 积分榜</button>
+    <button class="nav-btn" onclick="showArchiveManagementPage()"> 档案</button>
+    <button class="nav-btn" onclick="showRulesModal()"> 规则</button>
+  </div>
+</nav>
+
+<!-- Screen 0: Leaderboard -->
+<div id="screen-leaderboard" class="screen">
+  <div class="leaderboard-container">
+    <div class="leaderboard-header">
+      <h1>🏆 积分榜</h1>
+      <p style="color:#aaa; margin-top:10px;">全部历史战绩 · 按胜局数排名</p>
+    </div>
+    
+    <!-- Top 3 Players -->
+    <div class="top-players" id="topPlayers"></div>
+    
+    <!-- Full Ranking Table -->
+    <div class="leaderboard-table">
+      <table>
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>玩家</th>
+            <th>胜局</th>
+            <th>参与局数</th>
+            <th>胜率</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+    
+    <!-- Game History -->
+    <div class="game-history">
+      <h3>📜 历史对局</h3>
+      <div id="gameHistoryList"></div>
+    </div>
+    
+  </div>
+</div>
+
+<!-- Screen 1: Setup -->
+<div id="screen-setup" class="screen active">
+  <h1 style="display:none;">🃏 藏牌游戏</h1>
+
+  <!-- Welcome Hero Section -->
+  <div class="welcome-hero">
+    <div class="welcome-icon">💣</div>
+    <h2 class="welcome-title">把牌藏格子里 → 轮流翻牌 → 翻到就出局！</h2>
+    <p class="welcome-desc">多人面对面共屏游玩，每人把自己的主牌藏在某个格子里，然后轮流翻格子。翻到任何主牌则视为踩雷出局！最后存活的人获胜。</p>
+    <button class="btn btn-primary welcome-start-btn" onclick="quickStart()">⚡ 快速开始（2人）</button>
+    <p class="welcome-hint">使用推荐设置，1秒开玩</p>
+  </div>
+
+  <!-- Collapsible Advanced Settings -->
+  <div class="advanced-toggle" onclick="toggleAdvancedSettings()">
+    <span id="advancedToggleText">⚙️ 自定义设置</span>
+    <span id="advancedToggleArrow" class="toggle-arrow">▼</span>
+  </div>
+  
+  <div id="advancedSettings" class="advanced-settings" style="display:none;">
+    <!-- Game Config Grid - Card Style -->
+    <div class="game-config-grid">
+      <div class="config-card">
+        <label>🔢 格子数（每边）</label>
+        <input type="number" id="gridSize" value="6" min="3" max="12">
+        <span class="config-hint">越大越难找，推荐 6</span>
+      </div>
+      
+      <div class="config-card">
+        <label>👥 玩家人数</label>
+        <input type="number" id="playerCount" value="2" min="2" max="8" onchange="trimSelectedArchivePlayers()">
+        <span class="config-hint">面对面同屏对战</span>
+      </div>
+      
+      <div class="config-card">
+        <label>🎴 通用牌数量</label>
+        <input type="number" id="universalCardCount" value="0" min="0" max="20" onchange="updateUniversalCardInputs()">
+        <span class="config-hint">额外共享效果牌，新手可设 0</span>
+      </div>
+      
+      <div class="config-card">
+        <label>📝 个人牌数量</label>
+        <input type="number" id="personalCardCount" value="1" min="0" max="10" onchange="updateCardPreview()">
+        <span class="config-hint">自定义内容牌，默认 1 张</span>
+      </div>
+    </div>
+    
+    <!-- Dynamic universal card name inputs -->
+    <div id="universalCardInputs"></div>
+    
+    <!-- Card Preview -->
+    <div style="background:#0f3460; border-radius:8px; padding:15px; margin-top:20px;">
+      <h4 style="color:#e0e0e0; margin-bottom:10px;">🎴 你的手牌预览：</h4>
+      <div id="cardPreview" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+    
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goToPlayerSetup()">下一步 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 2: Player Names -->
+<div id="screen-players" class="screen">
+  <h1>玩家设置</h1>
+  
+
+  
+  <div id="playerSetups"></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="showScreen('screen-setup')">← 上一步</button>
+    <button class="btn btn-primary" onclick="startGame()">开始游戏 🎮</button>
+  </div>
+</div>
+
+<!-- Create Player Dialog -->
+<div id="createPlayerOverlay" class="privacy-overlay" style="display:none;">
+  <div style="background:#16213e; border-radius:12px; padding:30px; max-width:400px; width:90%;">
+    <h2 style="color:#3498db; margin-bottom:20px;">新建玩家档案</h2>
+    <div class="form-group">
+      <label>玩家名称</label>
+      <input type="text" id="newPlayerName" placeholder="输入玩家昵称">
+    </div>
+    <div class="form-group">
+      <label>主牌名称</label>
+      <input type="text" id="newPlayerMainCard" placeholder="例如：小明的主牌" value="主牌">
+    </div>
+    <div class="form-group">
+      <label>代表颜色</label>
+      <div id="newPlayerColors" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:5px;"></div>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="hideCreatePlayerDialog()">取消</button>
+      <button class="btn btn-primary" onclick="createNewPlayer()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Switch Player Modal -->
+<div id="switchPlayerModal" class="privacy-overlay" style="display:none; background:rgba(0,0,0,0.5);">
+  <div style="background:#16213e; border-radius:12px; padding:30px; max-width:400px; width:90%; position:relative;">
+    <button onclick="hideSwitchPlayerModal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#aaa; font-size:1.5em; cursor:pointer;">✕</button>
+    <h2 style="color:#fff; margin-bottom:20px; font-size:1.1em;">选择玩家</h2>
+    <div id="switchPlayerList" style="display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- Archive Management Screen -->
+<div id="screen-archive" class="screen">
+  <h1>玩家档案管理</h1>
+  <div id="archiveManagementList"></div>
+</div>
+
+<!-- Rules Modal -->
+<div id="rulesModal" class="rules-modal" style="display:none;">
+  <div class="rules-modal-overlay" onclick="hideRulesModal()"></div>
+  <div class="rules-modal-content">
+    <div class="rules-modal-header">
+      <h2>📖 游戏规则</h2>
+      <button class="rules-close-btn" onclick="hideRulesModal()">✕</button>
+    </div>
+    <div class="rules-modal-body">
+      <!-- Two-column layout for rules -->
+      <div class="rules-two-column">
+        <!-- Left column: Game objectives and flow -->
+        <div>
+          <h4 style="color:#fff; margin-bottom:10px; font-size:1.1em;">🎯 游戏目标</h4>
+          
+          <!-- Mine mode card -->
+          <div style="background:#1a2744; border-left:3px solid #e94560; border-radius:8px; padding:12px; margin-bottom:15px;">
+            <div style="font-weight:bold; color:#e94560; margin-bottom:5px;">💣 翻到就死</div>
+            <div style="font-size:0.9em; color:#aaa;">翻到任何主牌的玩家出局，最后存活的玩家获胜</div>
+          </div>
+          
+          <h4 style="color:#fff; margin-bottom:10px; font-size:1.1em;">📋 游戏流程</h4>
+          
+          <!-- Setup phase card -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">① 设置阶段</div>
+            <div style="font-size:0.9em; color:#aaa;">配置格子数、玩家人数和牌数</div>
+          </div>
+          
+          <!-- Hide phase card -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">② 藏匿阶段</div>
+            <div style="font-size:0.9em; color:#aaa;">每位玩家轮流将自己的所有牌藏在格子中，其他人不可见</div>
+          </div>
+          
+          <!-- Reveal phase card -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px;">
+            <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">③ 翻牌阶段</div>
+            <div style="font-size:0.9em; color:#aaa;">玩家轮流翻开格子，翻到主牌则出局，最后存活者获胜</div>
+          </div>
+        </div>
+        
+        <!-- Right column: Card types -->
+        <div>
+          <h4 style="color:#fff; margin-bottom:10px; font-size:1.1em;">🃏 牌面说明</h4>
+          
+          <!-- Main card -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:bold; color:#f1c40f; margin-bottom:5px;">⭐ 主牌</div>
+            <div style="font-size:0.9em; color:#aaa;">每位玩家独有的关键牌，翻到任何人的主牌都会让翻牌者出局。你的目标是避开所有主牌，成为最后的幸存者</div>
+          </div>
+          
+          <!-- Exclude one -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:bold; color:#e74c3c; margin-bottom:5px;">🚫 排除一个</div>
+            <div style="font-size:0.9em; color:#aaa;">抽中后额外获得一次翻牌机会</div>
+          </div>
+          
+          <!-- Relocate -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:bold; color:#9b59b6; margin-bottom:5px;">🔄 重新放置</div>
+            <div style="font-size:0.9em; color:#aaa;">抽中后立即重新选择自己的主牌位置</div>
+          </div>
+          
+          <!-- Universal card -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+            <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">🎴 通用牌</div>
+            <div style="font-size:0.9em; color:#aaa;">玩家共同定义内容的牌，每位玩家手牌中会各包含一张，翻开后对当前执行的玩家生效</div>
+          </div>
+          
+          <!-- Personal card -->
+          <div style="background:#1a2744; border-radius:8px; padding:12px;">
+            <div style="font-weight:bold; color:#2ecc71; margin-bottom:5px;">📝 个人牌</div>
+            <div style="font-size:0.9em; color:#aaa;">玩家藏匿阶段私人定制的内容，只有被翻开时才会公开内容，可以写一些刺激的内容（比如："v我50"、"请喝奶茶"等）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rules-modal-footer">
+      <button class="btn btn-primary" onclick="hideRulesModal()">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Overlay -->
+<div id="privacyOverlay" class="privacy-overlay" style="display:none;">
+  <h2 id="overlayTitle">请将设备交给</h2>
+  <p id="overlayMessage"></p>
+  <button class="btn btn-primary" onclick="dismissOverlay()" style="font-size:1.2em; padding:15px 40px;">准备好了，开始！</button>
+</div>
+
+<!-- Reveal Phase Player Switch Overlay -->
+<div id="revealSwitchOverlay" class="privacy-overlay" style="display:none;">
+  <h2 id="revealSwitchTitle" style="color:#3498db;">请将设备交给下一位玩家</h2>
+  <p id="revealSwitchMessage" style="color:#aaa; font-size:1.2em;"></p>
+  <button class="btn btn-primary" onclick="confirmRevealSwitch()" style="font-size:1.2em; padding:15px 40px;">我准备好了！</button>
+</div>
+
+<!-- Personal Card Edit Modal -->
+<div id="personalCardModal" class="privacy-overlay" style="display:none;">
+  <div style="background:#16213e; border-radius:12px; padding:30px; max-width:400px; width:90%;">
+    <h2 style="color:#27ae60; margin-bottom:20px;">📝 编辑个人牌</h2>
+    <div class="form-group">
+      <label>牌面内容</label>
+      <textarea id="personalCardInput" rows="3" placeholder="写点有趣的内容吧…" style="width:100%; padding:10px; border:1px solid #333; border-radius:8px; background:#0f3460; color:#eee; font-size:16px; resize:vertical;"></textarea>
+    </div>
+    <div class="form-group">
+      <label style="font-size:0.85em; color:#888;">🎲 随机推荐（点击选用）</label>
+      <div id="personalCardSuggestions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+      <button class="btn btn-secondary" onclick="refreshPersonalCardSuggestions()" style="margin-top:8px; padding:6px 12px; font-size:0.85em;">🔄 换一批</button>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="cancelPersonalCardEdit()">取消</button>
+      <button class="btn btn-primary" onclick="confirmPersonalCardEdit()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toastContainer" style="position:fixed; top:80px; right:20px; z-index:300; display:flex; flex-direction:column; gap:10px;"></div>
+
+<!-- Personal Card Reveal Modal -->
+<div id="personalCardRevealModal" class="privacy-overlay" style="display:none; background:rgba(0,0,0,0.5);">
+  <div style="background:#16213e; border-radius:12px; padding:30px; max-width:400px; width:90%; border:2px solid #27ae60; position:relative;">
+    <button onclick="dismissPersonalCardReveal()" style="position:absolute; top:12px; right:16px; background:none; border:none; color:#aaa; font-size:1.5em; cursor:pointer;">✕</button>
+    <h2 id="personalRevealTitle" style="color:#fff; margin-bottom:20px; font-size:1.1em; text-align:center;"></h2>
+    <div style="background:#0f3460; border-radius:10px; padding:20px; text-align:center;">
+      <p id="personalRevealContent" style="color:#fff; font-size:1.4em; font-weight:bold;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 5: Hiding Phase -->
+<div id="screen-hide" class="screen">
+  <h1>🫣 藏匿阶段</h1>
+  <div class="status-bar">
+    <div class="current-player" id="hideCurrentPlayer"></div>
+    <div class="phase-info" id="hidePhaseInfo">选择一张牌，然后点击格子放置</div>
+  </div>
+  <div class="hand-area">
+    <h3>手牌</h3>
+    <div class="hand-cards" id="handCards"></div>
+    <div id="hideCardTip" class="card-tip"></div>
+  </div>
+  <div class="grid-container">
+    <div class="grid" id="hideGrid"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-success" id="btnConfirmHide" onclick="confirmHiding()">✅ 藏匿完毕，确认</button>
+    <button class="btn btn-secondary" onclick="undoLastPlace()">↩ 撤销上一步</button>
+  </div>
+</div>
+
+<!-- Screen 6: Reveal Phase -->
+<div id="screen-reveal" class="screen">
+  <h1>🔍 翻牌阶段</h1>
+  
+  <!-- Top: Player status bar -->
+  <div class="reveal-player-bar" id="playerTabs"></div>
+  
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="current-player" id="revealCurrentPlayer"></div>
+    <div class="phase-info" id="revealPhaseInfo">点击格子翻牌</div>
+  </div>
+  
+  <!-- Grid -->
+  <div class="grid-container">
+    <div class="grid" id="revealGrid"></div>
+  </div>
+  
+  <!-- Action buttons -->
+  <div class="btn-row" style="justify-content:center; gap:15px; margin:15px 0;">
+    <button class="btn btn-secondary" onclick="switchToPrevPlayer()">⏮️ 上一个玩家</button>
+    <button class="btn btn-primary next-player-btn" onclick="switchToNextPlayer()">⏭️ 下一个玩家</button>
+    <button class="btn btn-primary" id="btnPlayAgain" onclick="location.reload()" style="display:none;">🔄 再来一局</button>
+    <button class="btn btn-secondary" id="btnViewLeaderboard" onclick="showLeaderboard()" style="display:none;">🏆 查看排行榜</button>
+  </div>
+  
+  <!-- Log area (collapsible) -->
+  <div class="reveal-log-toggle" onclick="toggleRevealLog()">
+    <span>📜 翻牌记录</span>
+    <span id="revealLogArrow" class="toggle-arrow">▲</span>
+  </div>
+  <div class="log-area" id="logArea"></div>
+</div>
+
+<!-- Screen 7: Game Over -->
+<div id="screen-gameover" class="screen">
+  <div class="game-over-box">
+    <h1 id="gameOverTitle">游戏结束</h1>
+    <div class="winner" id="gameOverWinner"></div>
+    <div class="details" id="gameOverDetails"></div>
+    <button class="btn btn-primary" onclick="location.reload()" style="font-size:1.2em;">🔄 再来一局</button>
+  </div>
+</div>
+
+<!-- Scripts: loaded in dependency order -->
+<script src="js/constants.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/game.js"></script>
+<script src="js/config.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/archive.js"></script>
+<script src="js/leaderboard.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

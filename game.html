@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>藏牌游戏</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding-top: 60px; }
+.screen { display: none; padding: 20px; max-width: 1000px; margin: 0 auto; }
+.screen.active { display: block; }
+h1 { text-align: center; color: #e94560; margin-bottom: 20px; font-size: 2em; }
+h2 { color: #e94560; margin-bottom: 15px; }
+h3 { color: #e0e0e0; margin-bottom: 10px; }
+
+/* Setup */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; color: #aaa; }
+.form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 8px; background: #16213e; color: #eee; font-size: 16px; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #e94560; }
+.radio-group { display: flex; gap: 20px; margin-top: 5px; }
+.radio-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #eee; }
+
+/* Game Mode Selector - Card Style */
+.game-mode-selector {
+  display: flex;
+  gap: 12px;
+}
+.mode-card {
+  flex: 1;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: #0f3460;
+  color: #aaa;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: center;
+  border: 2px solid transparent;
+}
+.mode-card:hover {
+  background: #1a4a8a;
+  color: #fff;
+}
+.mode-card.active {
+  background: #e94560;
+  color: #fff;
+  border-color: #ff6b81;
+}
+.checkmark {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+/* Game Config Grid - Card Style */
+.game-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.config-card {
+  background: #0f3460;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+.config-card:hover {
+  background: #1a4a8a;
+}
+.config-card label {
+  display: block;
+  font-size: 0.95em;
+  color: #aaa;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+.config-card input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #16213e;
+  color: #eee;
+  font-size: 1.1em;
+  text-align: center;
+  transition: all 0.2s;
+}
+.config-card input:focus {
+  outline: none;
+  border-color: #e94560;
+  background: #1a2744;
+}
+
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: #16213e;
+  padding: 8px;
+  border-radius: 12px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #aaa;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn:hover {
+  background: #1a4a8a;
+  color: #fff;
+}
+.tab-btn.active {
+  background: #e94560;
+  color: #fff;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+.rules-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  padding: 10px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.top-nav h1 {
+  margin: 0;
+  font-size: 1.5em;
+  color: #e94560;
+}
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+}
+.nav-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #0f3460;
+  color: #fff;
+}
+.nav-btn:hover {
+  background: #1a4a8a;
+}
+.nav-btn.primary {
+  background: #e94560;
+}
+.nav-btn.primary:hover {
+  background: #c73652;
+}
+
+/* Leaderboard page */
+.leaderboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.leaderboard-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.top-players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+.top-player-card {
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid;
+}
+.top-player-card.gold {
+  border-color: #ffd700;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+.top-player-card.silver {
+  border-color: #c0c0c0;
+  box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3);
+}
+.top-player-card.bronze {
+  border-color: #cd7f32;
+  box-shadow: 0 4px 15px rgba(205, 127, 50, 0.3);
+}
+.top-player-rank {
+  font-size: 3em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.top-player-name {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.top-player-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
+}
+.stat-item {
+  text-align: center;
+}
+.stat-value {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #e94560;
+}
+.stat-label {
+  font-size: 0.8em;
+  color: #aaa;
+}
+.leaderboard-table {
+  background: #16213e;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+.leaderboard-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #0a0a1a;
+}
+.leaderboard-table th {
+  background: #0f3460;
+  font-weight: bold;
+  color: #e94560;
+}
+.leaderboard-table tr:hover {
+  background: #1a2744;
+}
+.rank-badge {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: bold;
+}
+.rank-badge.top1 { background: #ffd700; color: #000; }
+.rank-badge.top2 { background: #c0c0c0; color: #000; }
+.rank-badge.top3 { background: #cd7f32; color: #fff; }
+.rank-badge.normal { background: #0f3460; color: #fff; }
+.game-history {
+  background: #16213e;
+  border-radius: 10px;
+  padding: 20px;
+}
+.game-history h3 {
+  color: #e94560;
+  margin-bottom: 15px;
+}
+.history-item {
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+.history-date {
+  color: #aaa;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+.history-winner {
+  color: #f1c40f;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.history-scores {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+/* Two-column grid layout for setup form */
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+@media (max-width: 600px) {
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.btn { padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all .2s; }
+.btn-primary { background: #e94560; color: #fff; }
+.btn-primary:hover { background: #c73652; }
+.btn-secondary { background: #0f3460; color: #fff; }
+.btn-secondary:hover { background: #1a4a8a; }
+.btn-success { background: #27ae60; color: #fff; }
+.btn-success:hover { background: #1e8c4c; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-danger:hover { background: #c0392b; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+/* Players setup */
+.player-setup { background: #16213e; border-radius: 10px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #e94560; }
+.player-setup h3 { color: #e94560; }
+
+/* Card config */
+.card-input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.card-input-row input { flex: 1; padding: 8px; border: 1px solid #333; border-radius: 6px; background: #16213e; color: #eee; }
+.card-tag { display: inline-block; background: #0f3460; padding: 4px 12px; border-radius: 15px; margin: 3px; font-size: 14px; }
+
+/* Grid */
+.grid-container { display: flex; justify-content: center; margin: 20px 0; }
+.grid { display: grid; gap: 3px; background: #0a0a1a; padding: 3px; border-radius: 10px; }
+.cell { width: 60px; height: 60px; background: #16213e; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; position: relative; font-size: 12px; text-align: center; overflow: hidden; }
+.cell:hover { background: #1a3a6e; }
+.cell.hidden-card { background: #2c3e50; }
+.cell.revealed { background: #1a1a2e; cursor: default; }
+.cell.has-cards { border: 2px solid #e94560; }
+.cell .cell-number { font-size: 10px; color: #888; font-weight: bold; margin-bottom: 2px; }
+.cell .card-count { font-size: 11px; color: #e94560; font-weight: bold; }
+.cell .cell-cards { display: flex; flex-direction: column; gap: 1px; font-size: 9px; line-height: 1.2; }
+.cell .cell-cards .card-item { padding: 1px 3px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 56px; }
+.cell .cell-cards .card-item.main-card { background: #e94560; color: #fff; }
+.cell .cell-cards .card-item.universal-card { background: #3498db; color: #fff; }
+.cell .cell-cards .card-item.personal-card { background: #27ae60; color: #fff; }
+
+/* Hiding phase */
+.hand-area { background: #16213e; border-radius: 10px; padding: 15px; margin: 15px 0; }
+.hand-cards { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.hand-card { padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 14px; border: 2px solid transparent; }
+.hand-card:hover { transform: translateY(-3px); }
+.hand-card.selected { border-color: #f1c40f; transform: translateY(-5px); box-shadow: 0 4px 15px rgba(241,196,15,0.3); }
+.hand-card.main { background: #e94560; }
+.hand-card.universal { background: #3498db; }
+.hand-card.personal { background: #27ae60; }
+.hand-card.placed { opacity: 0.3; pointer-events: none; }
+
+/* Status bar */
+.status-bar { background: #1a2744; border-radius: 10px; padding: 15px; margin: 15px 0; text-align: center; transition: background-color 0.3s ease; }
+.status-bar .current-player { font-size: 1.4em; font-weight: bold; }
+.status-bar .phase-info { color: #aaa; margin-top: 5px; }
+
+/* Fixed top bar for reveal phase */
+.fixed-top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  padding: 10px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fixed-top-bar .top-player-info {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+.fixed-top-bar .top-phase-info {
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+/* Sidebar layout for reveal phase */
+.reveal-layout {
+  display: flex;
+  gap: 20px;
+  margin-top: 80px; /* Space for fixed top bar */
+}
+.player-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #16213e;
+  border-radius: 10px;
+  padding: 15px;
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+}
+.player-sidebar h3 {
+  color: #e94560;
+  margin-bottom: 10px;
+  font-size: 1em;
+}
+.grid-area {
+  flex: 1;
+}
+
+/* Identity switcher */
+.identity-switcher { background: #16213e; border-radius: 10px; padding: 15px; margin: 15px 0; }
+.identity-switcher h3 { color: #e94560; margin-bottom: 10px; }
+.player-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.player-tab { padding: 8px 16px; border-radius: 8px; cursor: pointer; background: #0f3460; transition: all .2s; border: 2px solid transparent; }
+.player-tab:hover { background: #1a4a8a; }
+.player-tab.active { border-color: #e94560; background: #e94560; transition: background-color 0.3s ease; }
+.player-tab.eliminated { opacity: 0.4; text-decoration: line-through; }
+
+/* Scoreboard */
+.scoreboard { background: #16213e; border-radius: 10px; padding: 15px; margin: 15px 0; }
+.score-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #0a0a1a; }
+.score-row .player-name { color: #e94560; font-weight: bold; }
+.score-row .player-score { color: #f1c40f; }
+
+/* Game over */
+.game-over-box { text-align: center; padding: 40px; }
+.game-over-box h1 { font-size: 3em; margin-bottom: 20px; }
+.game-over-box .winner { font-size: 1.5em; color: #f1c40f; margin-bottom: 20px; }
+.game-over-box .details { color: #aaa; margin-bottom: 30px; }
+
+/* Privacy overlay */
+.privacy-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000; display: flex; align-items: center; justify-content: center; z-index: 100; flex-direction: column; }
+.privacy-overlay h2 { color: #e94560; font-size: 2em; margin-bottom: 20px; }
+.privacy-overlay p { color: #aaa; margin-bottom: 30px; font-size: 1.1em; }
+
+/* Log */
+.log-area { background: #0a0a1a; border-radius: 8px; padding: 10px; margin: 10px 0; max-height: 200px; overflow-y: auto; font-size: 13px; }
+.log-entry { padding: 4px 8px; border-bottom: 1px solid #16213e; color: #aaa; }
+.log-entry.important { color: #e94560; font-weight: bold; }
+
+/* Card preview */
+.preview-card { padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: default; user-select: none; transition: all .2s; }
+.preview-card:hover { transform: translateY(-2px); opacity: 0.9; }
+.preview-card.universal { cursor: pointer; border: 2px dashed rgba(255,255,255,0.4); }
+.preview-card.universal:hover { border-color: #fff; }
+
+/* Relocate mode */
+.cell.relocate-target { border: 2px dashed #f1c40f !important; cursor: pointer !important; }
+.cell.relocate-target:hover { background: #3e2723 !important; }
+
+/* Extra turn highlight */
+.extra-turn-info { background: #ff9800 !important; color: #fff !important; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; margin: 10px 0; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .reveal-layout { flex-direction: column; }
+  .player-sidebar { 
+    width: 100%; 
+    position: static;
+    margin-bottom: 15px;
+  }
+  .grid-area { margin-top: 0; }
+}
+@media (max-width: 600px) {
+  .cell { width: 45px; height: 45px; font-size: 10px; }
+  .cell .cell-cards .card-item { font-size: 7px; }
+  .fixed-top-bar { padding: 8px 12px; flex-direction: column; gap: 5px; }
+  .fixed-top-bar .top-player-info { font-size: 1em; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top Navigation Bar -->
+<nav class="top-nav">
+  <h1>🃏 藏牌游戏</h1>
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="showLeaderboard()">🏆 积分榜</button>
+    <button class="nav-btn" onclick="fixPlayerStats()" style="background:#ff9800;"> 修复数据</button>
+  </div>
+</nav>
+
+<!-- Screen 0: Leaderboard -->
+<div id="screen-leaderboard" class="screen">
+  <div class="leaderboard-container">
+    <div class="leaderboard-header">
+      <h1>🏆 积分榜</h1>
+      <p style="color:#aaa; margin-top:10px;">全部历史战绩 · 按胜局数排名</p>
+    </div>
+    
+    <!-- Top 3 Players -->
+    <div class="top-players" id="topPlayers"></div>
+    
+    <!-- Full Ranking Table -->
+    <div class="leaderboard-table">
+      <table>
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>玩家</th>
+            <th>胜局</th>
+            <th>参与局数</th>
+            <th>胜率</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+    
+    <!-- Game History -->
+    <div class="game-history">
+      <h3>📜 历史对局</h3>
+      <div id="gameHistoryList"></div>
+    </div>
+    
+    <div style="text-align:center; margin-top:30px;">
+      <button class="btn btn-secondary" onclick="hideLeaderboard()">← 返回游戏</button>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 1: Setup -->
+<div id="screen-setup" class="screen active">
+  <h1 style="display:none;">🃏 藏牌游戏</h1>
+  
+  <!-- Rules Section -->
+  <div style="background:#16213e; border-radius:10px; padding:20px; margin-bottom:20px;">
+    
+    <!-- Two-column layout for rules -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      
+      <!-- Left column: Game objectives and flow -->
+      <div>
+        <h4 style="color:#fff; margin-bottom:10px; font-size:1.1em;">🎯 游戏目标</h4>
+        
+        <!-- Find mode card -->
+        <div style="background:#1a2744; border-left:3px solid #27ae60; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#27ae60; margin-bottom:5px;">🔍 找人模式</div>
+          <div style="font-size:0.9em; color:#aaa;">当所有主牌被翻开后，找到最多主牌的玩家获胜</div>
+        </div>
+        
+        <!-- Mine mode card -->
+        <div style="background:#1a2744; border-left:3px solid #e94560; border-radius:8px; padding:12px; margin-bottom:15px;">
+          <div style="font-weight:bold; color:#e94560; margin-bottom:5px;">💣 排雷模式</div>
+          <div style="font-size:0.9em; color:#aaa;">翻到主牌的玩家出局，最后存活的玩家获胜</div>
+        </div>
+        
+        <h4 style="color:#fff; margin-bottom:10px; font-size:1.1em;">📋 游戏流程</h4>
+        
+        <!-- Setup phase card -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">① 设置阶段</div>
+          <div style="font-size:0.9em; color:#aaa;">配置格子数、玩家人数、牌数和游戏模式</div>
+        </div>
+        
+        <!-- Hide phase card -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">② 藏匿阶段</div>
+          <div style="font-size:0.9em; color:#aaa;">每位玩家轮流将自己的所有牌藏在格子中，其他人不可见</div>
+        </div>
+        
+        <!-- Reveal phase card -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px;">
+          <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">③ 翻牌阶段</div>
+          <div style="font-size:0.9em; color:#aaa;">玩家轮流翻开格子，根据格子内容触发相应效果/计分</div>
+        </div>
+      </div>
+      
+      <!-- Right column: Card types -->
+      <div>
+        <h4 style="color:#fff; margin-bottom:10px; font-size:1.1em;">🃏 牌面说明</h4>
+        
+        <!-- Main card -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#f1c40f; margin-bottom:5px;">⭐ 主牌</div>
+          <div style="font-size:0.9em; color:#aaa;">每位玩家独有的关键牌，游戏的核心目标。在找人模式中需要找到其他人的主牌来得分；在排雷模式中需要避免翻到自己的主牌以免出局</div>
+        </div>
+        
+        <!-- Exclude one -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#e74c3c; margin-bottom:5px;">🚫 排除一个</div>
+          <div style="font-size:0.9em; color:#aaa;">抽中后额外获得一次翻牌机会</div>
+        </div>
+        
+        <!-- Relocate -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#9b59b6; margin-bottom:5px;">🔄 重新放置</div>
+          <div style="font-size:0.9em; color:#aaa;">抽中后立即重新选择自己的主牌位置</div>
+        </div>
+        
+        <!-- Universal card -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px; margin-bottom:10px;">
+          <div style="font-weight:bold; color:#3498db; margin-bottom:5px;">🎴 通用牌</div>
+          <div style="font-size:0.9em; color:#aaa;">玩家共同定义内容的牌，每位玩家手牌中会各包含一张，翻开后对当前执行的玩家生效</div>
+        </div>
+        
+        <!-- Personal card -->
+        <div style="background:#1a2744; border-radius:8px; padding:12px;">
+          <div style="font-weight:bold; color:#2ecc71; margin-bottom:5px;">📝 个人牌</div>
+          <div style="font-size:0.9em; color:#aaa;">玩家藏匿阶段私人定制的内容，只有被翻开时才会公开内容，可以写一些刺激的内容（比如："v我50"、"请喝奶茶"等）</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Player Archive Quick Select -->
+  <div style="background:#16213e; border-radius:10px; padding:15px; margin-bottom:20px; border-left:4px solid #3498db;">
+    <h4 style="color:#3498db; margin-bottom:10px;">📁 玩家档案</h4>
+    <div id="playerArchiveSelect"></div>
+    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-secondary" onclick="showCreatePlayerDialog()" style="font-size:0.9em; padding:8px 16px;">➕ 新建玩家</button>
+      <button class="btn btn-secondary" onclick="refreshPlayerArchive()" style="font-size:0.9em; padding:8px 16px;">🔄 刷新档案</button>
+    </div>
+  </div>
+
+  <!-- Game Config Grid - Card Style -->
+  <div class="game-config-grid">
+    <div class="config-card">
+      <label>🔢 格子数（每边）</label>
+      <input type="number" id="gridSize" value="6" min="3" max="12">
+    </div>
+    
+    <div class="config-card">
+      <label>👥 玩家人数（最少2人）</label>
+      <input type="number" id="playerCount" value="2" min="2" max="8" onchange="trimSelectedArchivePlayers()">
+    </div>
+    
+    <div class="config-card">
+      <label> 通用牌数量（不含内置特殊牌）</label>
+      <input type="number" id="universalCardCount" value="0" min="0" max="20" onchange="updateUniversalCardInputs()">
+    </div>
+    
+    <div class="config-card">
+      <label>📝 个人牌数量</label>
+      <input type="number" id="personalCardCount" value="1" min="0" max="10" onchange="updateCardPreview()">
+    </div>
+  </div>
+  
+  <!-- Dynamic universal card name inputs (below universal card count) -->
+  <div id="universalCardInputs"></div>
+  
+  <div class="form-group" style="margin-top:20px; background:#1a2744; border-radius:10px; padding:15px;">
+    <label style="font-size:1.1em; color:#fff; margin-bottom:10px;">🎯 游戏模式</label>
+    <div class="game-mode-selector">
+      <div class="mode-card" onclick="selectGameMode('find')" id="mode-find">🔍 找人模式</div>
+      <div class="mode-card active" onclick="selectGameMode('mine')" id="mode-mine">💣 排雷模式<span class="checkmark">✓</span></div>
+    </div>
+    <!-- 隐藏的 radio 用于表单提交 -->
+    <input type="hidden" name="gameMode" value="mine" id="hiddenGameMode">
+  </div>
+  
+  <!-- Card Preview -->
+  <div style="background:#0f3460; border-radius:8px; padding:15px; margin-top:20px;">
+    <h4 style="color:#e0e0e0; margin-bottom:10px;">🎴 你的手牌预览：</h4>
+    <div id="cardPreview" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+  </div>
+  
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="goToPlayerSetup()">下一步 →</button>
+  </div>
+</div>
+
+<!-- Screen 2: Player Names -->
+<div id="screen-players" class="screen">
+  <h1>玩家设置</h1>
+  <div id="playerSetups"></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="showScreen('screen-setup')">← 上一步</button>
+    <button class="btn btn-primary" onclick="startGame()">开始游戏 🎮</button>
+  </div>
+</div>
+
+<!-- Create Player Dialog -->
+<div id="createPlayerOverlay" class="privacy-overlay" style="display:none;">
+  <div style="background:#16213e; border-radius:12px; padding:30px; max-width:400px; width:90%;">
+    <h2 style="color:#3498db; margin-bottom:20px;">➕ 新建玩家档案</h2>
+    <div class="form-group">
+      <label>玩家名称</label>
+      <input type="text" id="newPlayerName" placeholder="输入玩家昵称">
+    </div>
+    <div class="form-group">
+      <label>主牌名称</label>
+      <input type="text" id="newPlayerMainCard" placeholder="例如：小明的主牌" value="主牌">
+    </div>
+    <div class="form-group">
+      <label>代表颜色</label>
+      <div id="newPlayerColors" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:5px;"></div>
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="hideCreatePlayerDialog()">取消</button>
+      <button class="btn btn-primary" onclick="createNewPlayer()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Overlay -->
+<div id="privacyOverlay" class="privacy-overlay" style="display:none;">
+  <h2 id="overlayTitle">请将设备交给</h2>
+  <p id="overlayMessage"></p>
+  <button class="btn btn-primary" onclick="dismissOverlay()" style="font-size:1.2em; padding:15px 40px;">准备好了，开始！</button>
+</div>
+
+<!-- Screen 5: Hiding Phase -->
+<div id="screen-hide" class="screen">
+  <h1>🫣 藏匿阶段</h1>
+  <div class="status-bar">
+    <div class="current-player" id="hideCurrentPlayer"></div>
+    <div class="phase-info" id="hidePhaseInfo">选择一张牌，然后点击格子放置</div>
+  </div>
+  <div class="hand-area">
+    <h3>手牌</h3>
+    <div class="hand-cards" id="handCards"></div>
+  </div>
+  <div class="grid-container">
+    <div class="grid" id="hideGrid"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-success" id="btnConfirmHide" onclick="confirmHiding()">✅ 藏匿完毕，确认</button>
+    <button class="btn btn-secondary" onclick="undoLastPlace()">↩ 撤销上一步</button>
+  </div>
+</div>
+
+<!-- Screen 6: Reveal Phase -->
+<div id="screen-reveal" class="screen">
+  <!-- Fixed top bar showing current player -->
+  <div class="fixed-top-bar">
+    <div>
+      <div class="top-player-info" id="topPlayerInfo">当前玩家: </div>
+      <div class="top-phase-info" id="topPhaseInfo">翻牌阶段</div>
+    </div>
+    <button class="btn btn-danger" onclick="endGame()">🏁 结束游戏</button>
+  </div>
+
+  <h1>🔍 翻牌阶段</h1>
+  
+  <!-- Main layout with sidebar and grid -->
+  <div class="reveal-layout">
+    <!-- Left sidebar with player switcher -->
+    <div class="player-sidebar">
+      <h3>切换玩家</h3>
+      <div class="player-tabs" id="playerTabs"></div>
+      
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #0f3460;">
+        <h3>计分板</h3>
+        <div id="sidebarScoreboard"></div>
+      </div>
+    </div>
+    
+    <!-- Right area with grid and logs -->
+    <div class="grid-area">
+      <div class="status-bar">
+        <div class="current-player" id="revealCurrentPlayer"></div>
+        <div class="phase-info" id="revealPhaseInfo">点击格子翻牌</div>
+      </div>
+      <div class="grid-container">
+        <div class="grid" id="revealGrid"></div>
+      </div>
+      <!-- Next player button -->
+      <div style="text-align: center; margin: 15px 0;">
+        <button class="btn btn-primary next-player-btn" onclick="switchToNextPlayer()" style="font-size: 1.1em; padding: 12px 40px;">⏭️ 下一个玩家</button>
+      </div>
+      <div class="log-area" id="logArea"></div>
+      <!-- Game result area (hidden by default) -->
+      <div id="gameResult" style="display:none; background:#16213e; border-radius:10px; padding:20px; margin:15px 0; text-align:center;">
+        <h2 id="resultTitle" style="color:#f1c40f; font-size:2em; margin-bottom:15px;"></h2>
+        <div id="resultDetails" style="color:#aaa; margin-bottom:20px;"></div>
+        <button class="btn btn-primary" onclick="location.reload()" style="font-size:1.1em;">🔄 再来一局</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Screen 7: Game Over -->
+<div id="screen-gameover" class="screen">
+  <div class="game-over-box">
+    <h1 id="gameOverTitle">游戏结束</h1>
+    <div class="winner" id="gameOverWinner"></div>
+    <div class="details" id="gameOverDetails"></div>
+    <button class="btn btn-primary" onclick="location.reload()" style="font-size:1.2em;">🔄 再来一局</button>
+  </div>
+</div>
+
+<script>
+// ==================== Game State ====================
+let game = {
+  gridSize: 6,
+  players: [],
+  universalCards: [],
+  customUniversalCards: [], // User-defined universal cards
+  mode: 'find', // 'find' or 'mine'
+  phase: 'setup',
+  currentHidingPlayer: 0,
+  currentRevealPlayer: 0,
+  grid: [], // grid[row][col] = [{playerIdx, cardType, text}]
+  revealedCells: new Set(),
+  scores: {}, // playerIdx -> found main cards count
+  eliminated: new Set(),
+  logs: [],
+  personalCardIdx: 0,
+  selectedHandCard: null,
+  hideHistory: [], // for undo
+  extraTurns: 0, // Extra turns from "Exclude One" card
+  isRelocating: false, // Whether currently relocating main card
+  relocatingPlayerIdx: null, // Player index who is relocating
+  relocateSource: null, // {r, c} of original main card position
+  personalCardCount: 1, // Number of personal cards per player
+  universalCardCount: 0, // Number of custom universal cards (excluding built-in special cards)
+  gameEnded: false // Whether game has ended
+};
+
+const COLORS = ['#e94560','#3498db','#27ae60','#f39c12','#9b59b6','#1abc9c','#e67e22','#2ecc71'];
+
+// ==================== Card Preview ====================
+// Update universal card input fields dynamically
+function updateUniversalCardInputs() {
+  const universalCount = parseInt(document.getElementById('universalCardCount').value) || 0;
+  const container = document.getElementById('universalCardInputs');
+  
+  // Hide container if count is 0
+  if (universalCount === 0) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    game.customUniversalCards = [];
+    updateCardPreview();
+    return;
+  }
+  
+  // Show container
+  container.style.display = 'block';
+  
+  // Save existing values to preserve user input when count changes
+  const existingValues = [];
+  const existingInputs = container.querySelectorAll('.universal-card-input');
+  existingInputs.forEach((input, idx) => {
+    if (idx < universalCount) {
+      existingValues.push(input.value);
+    }
+  });
+  
+  // Clear and rebuild inputs
+  container.innerHTML = '';
+  
+  for (let i = 0; i < universalCount; i++) {
+    const defaultValue = existingValues[i] || `自定义通用牌${i + 1}`;
+    const div = document.createElement('div');
+    div.className = 'form-group';
+    div.style.marginBottom = '8px';
+    div.style.marginLeft = '20px';
+    div.innerHTML = `
+      <label style="font-size: 13px; color: #aaa;">✏️ 自定义通用牌${i + 1}名称：</label>
+      <input type="text" class="universal-card-input" data-index="${i}" value="${defaultValue}" 
+             placeholder="例如：炸弹、跳过、反转..." oninput="updateCustomUniversalCards()">
+    `;
+    container.appendChild(div);
+  }
+  
+  // Initialize custom cards array and update preview
+  updateCustomUniversalCards();
+}
+
+// Update custom universal cards array from input fields
+function updateCustomUniversalCards() {
+  const inputs = document.querySelectorAll('.universal-card-input');
+  game.customUniversalCards = [];
+  
+  inputs.forEach((input, idx) => {
+    const value = input.value.trim();
+    // Use default name if empty
+    game.customUniversalCards[idx] = value || `自定义通用牌${idx + 1}`;
+  });
+  
+  // Update the preview
+  updateCardPreview();
+}
+
+function updateCardPreview() {
+  const universalCount = parseInt(document.getElementById('universalCardCount').value) || 0;
+  const personalCount = parseInt(document.getElementById('personalCardCount').value) || 0;
+  
+  let html = '';
+  // Main card
+  html += `<div class="preview-card main" style="background:#e94560; color:#fff;">⭐ 主牌</div>`;
+  // Built-in special cards
+  html += `<div class="preview-card special" style="background:#ff9800; color:#fff;">🚫 排除一个</div>`;
+  html += `<div class="preview-card special" style="background:#9c27b0; color:#fff;">🔄 重新放置</div>`;
+  // Custom universal cards (use user-defined names)
+  for (let i = 0; i < universalCount; i++) {
+    const cardName = game.customUniversalCards[i] || `自定义通用牌${i + 1}`;
+    html += `<div class="preview-card" style="background:#3498db; color:#fff;">️ ${cardName}</div>`;
+  }
+  // Personal cards
+  for (let i = 0; i < personalCount; i++) {
+    html += `<div class="preview-card" style="background:#27ae60; color:#fff;">📝 个人牌${i+1}（藏匿时编辑）</div>`;
+  }
+  
+  document.getElementById('cardPreview').innerHTML = html;
+}
+
+// ==================== Game Mode Selector ====================
+function selectGameMode(mode) {
+  // 更新隐藏 input
+  document.getElementById('hiddenGameMode').value = mode;
+  
+  // 更新卡片样式
+  document.querySelectorAll('.mode-card').forEach(card => {
+    card.classList.remove('active');
+    const check = card.querySelector('.checkmark');
+    if (check) check.remove();
+  });
+  
+  const activeCard = document.getElementById(`mode-${mode}`);
+  activeCard.classList.add('active');
+  activeCard.innerHTML += ' <span class="checkmark">✓</span>';
+}
+
+// ==================== Tab Switching ====================
+function switchTab(tabName) {
+  // 更新按钮状态
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // 更新内容显示
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  document.getElementById(`tab-${tabName}`).classList.add('active');
+}
+
+// ==================== Screen Management ====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ==================== Setup ====================
+function goToPlayerSetup() {
+  const count = parseInt(document.getElementById('playerCount').value);
+  if (count < 2) { alert('至少需要2名玩家'); return; }
+  
+  // Initialize universal card inputs
+  updateUniversalCardInputs();
+  
+  // Initialize card preview
+  updateCardPreview();
+  
+  const container = document.getElementById('playerSetups');
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    container.innerHTML += `
+      <div class="player-setup" style="border-left-color:${COLORS[i % COLORS.length]}">
+        <h3 style="color:${COLORS[i % COLORS.length]}">玩家 ${i + 1}</h3>
+        <div class="form-group">
+          <label>玩家名称</label>
+          <input type="text" id="pname_${i}" value="玩家${i + 1}" placeholder="输入名称">
+        </div>
+        <div class="form-group">
+          <label>主牌名称（代表你的身份）</label>
+          <input type="text" id="pmain_${i}" placeholder="例如：小明的主牌" value="主牌">
+        </div>
+      </div>`;
+  }
+  showScreen('screen-players');
+}
+
+// ==================== Start Game ====================
+function startGame() {
+  // Collect player info
+  const count = parseInt(document.getElementById('playerCount').value);
+  game.players = [];
+  const setupDivs = document.querySelectorAll('#playerSetups .player-setup');
+  for (let i = 0; i < count; i++) {
+    const name = document.getElementById(`pname_${i}`).value.trim() || `玩家${i + 1}`;
+    const mainName = document.getElementById(`pmain_${i}`).value.trim() || '主牌';
+    const archiveId = setupDivs[i] ? setupDivs[i].getAttribute('data-archive-id') || '' : '';
+    const playerColor = archiveId ? (getPlayersDB().players.find(p => p.id === archiveId) || {}).color || COLORS[i % COLORS.length] : COLORS[i % COLORS.length];
+    game.players.push({ name, mainCard: mainName, personalCards: [], color: playerColor, archiveId: archiveId || null });
+  }
+  
+  // Get game settings
+  game.gridSize = parseInt(document.getElementById('gridSize').value);
+  game.mode = document.getElementById('hiddenGameMode').value || 'mine';
+  game.universalCardCount = parseInt(document.getElementById('universalCardCount').value) || 0;
+  game.personalCardCount = parseInt(document.getElementById('personalCardCount').value) || 0;
+  
+  // Get custom universal card names from input fields
+  game.customUniversalCards = [];
+  const inputs = document.querySelectorAll('.universal-card-input');
+  inputs.forEach((input, idx) => {
+    const value = input.value.trim();
+    game.customUniversalCards[idx] = value || `自定义通用牌${idx + 1}`;
+  });
+  
+  // Initialize grid
+  game.grid = [];
+  for (let r = 0; r < game.gridSize; r++) {
+    game.grid[r] = [];
+    for (let c = 0; c < game.gridSize; c++) {
+      game.grid[r][c] = [];
+    }
+  }
+  game.revealedCells = new Set();
+  game.scores = {};
+  game.eliminated = new Set();
+  game.logs = [];
+  game.currentHidingPlayer = 0;
+  game.selectedHandCard = null;
+  game.hideHistory = [];
+  game.extraTurns = 0;
+  game.pendingRelocateCount = 0;  // Track number of pending relocate cards
+  game.isRelocating = false;
+  game.relocatingPlayerIdx = null;
+  game.relocateSource = null;
+  game.gameEnded = false;
+
+  // Initialize scores
+  for (let i = 0; i < game.players.length; i++) {
+    game.scores[i] = 0;
+  }
+
+  // Build each player's hand
+  game.players.forEach(p => {
+    p.hand = [];
+    // Main card
+    p.hand.push({ type: 'main', text: p.mainCard, placed: false });
+    // Built-in special cards
+    p.hand.push({ type: 'universal_exclude', text: '排除一个', placed: false });
+    p.hand.push({ type: 'universal_relocate', text: '重新放置', placed: false });
+    // Custom universal cards
+    for (let i = 0; i < game.universalCardCount; i++) {
+      p.hand.push({ type: 'universal_custom', text: game.customUniversalCards[i], placed: false });
+    }
+    // Personal cards (to be edited during hiding phase)
+    for (let i = 0; i < game.personalCardCount; i++) {
+      p.hand.push({ type: 'personal', text: '', placed: false, edited: false });
+    }
+  });
+
+  // Show privacy overlay for first hiding player
+  game.phase = 'hide';
+  showPrivacyOverlay();
+}
+
+// ==================== Privacy Overlay ====================
+function showPrivacyOverlay() {
+  const overlay = document.getElementById('privacyOverlay');
+  const player = game.players[game.currentHidingPlayer];
+  document.getElementById('overlayTitle').textContent = '请将设备交给';
+  document.getElementById('overlayMessage').textContent = `${player.name}（${game.currentHidingPlayer + 1}/${game.players.length}）进行藏牌`;
+  overlay.style.display = 'flex';
+}
+
+function dismissOverlay() {
+  document.getElementById('privacyOverlay').style.display = 'none';
+  if (game.phase === 'hide' || game.phase === 'setup') {
+    game.phase = 'hide';
+    showScreen('screen-hide');
+    renderHidePhase();
+  }
+}
+
+// ==================== Hiding Phase ====================
+function renderHidePhase() {
+  const player = game.players[game.currentHidingPlayer];
+  document.getElementById('hideCurrentPlayer').textContent = `${player.name} 的回合`;
+  document.getElementById('hideCurrentPlayer').style.color = player.color;
+
+  const remaining = player.hand.filter(c => !c.placed).length;
+  document.getElementById('hidePhaseInfo').textContent = `剩余 ${remaining} 张牌需要放置 | 点击个人牌可编辑内容，选择牌后点击格子放置`;
+
+  // Auto-select first unplaced card if no card is currently selected
+  if (game.selectedHandCard === null && remaining > 0) {
+    const firstUnplacedIdx = player.hand.findIndex(c => !c.placed);
+    if (firstUnplacedIdx !== -1) {
+      game.selectedHandCard = firstUnplacedIdx;
+    }
+  }
+
+  // Render hand
+  const handDiv = document.getElementById('handCards');
+  handDiv.innerHTML = '';
+  player.hand.forEach((card, idx) => {
+    const div = document.createElement('div');
+    let typeClass = card.type;
+    if (card.type === 'universal_exclude') typeClass = 'universal';
+    else if (card.type === 'universal_relocate') typeClass = 'universal';
+    else if (card.type === 'universal_custom') typeClass = 'universal';
+    div.className = `hand-card ${typeClass}${card.placed ? ' placed' : ''}`;
+    
+    let displayName = '';
+    if (card.type === 'main') displayName = `⭐${card.text}`;
+    else if (card.type === 'personal') displayName = card.edited ? `📝${card.text}` : '📝未命名';
+    else displayName = card.text;
+    div.textContent = displayName;
+    
+    if (!card.placed) {
+      div.onclick = () => selectHandCard(idx);
+    }
+    if (game.selectedHandCard === idx && !card.placed) {
+      div.classList.add('selected');
+    }
+    handDiv.appendChild(div);
+  });
+
+  // Render grid
+  renderGrid('hideGrid', true);
+}
+
+function selectHandCard(idx) {
+  const player = game.players[game.currentHidingPlayer];
+  const card = player.hand[idx];
+  
+  // Personal card: prompt for editing before selection
+  if (card.type === 'personal' && !card.placed) {
+    const defaultName = `个人牌${idx + 1}`;
+    const content = prompt('请输入个人牌内容（留空使用默认名称）：', card.edited ? card.text : '');
+    if (content === null) return; // cancelled
+    card.text = content.trim() || defaultName;
+    card.edited = true;
+  }
+  
+  game.selectedHandCard = idx;
+  renderHidePhase();
+}
+
+function renderGrid(containerId, isHidePhase) {
+  const gridDiv = document.getElementById(containerId);
+  gridDiv.style.gridTemplateColumns = `repeat(${game.gridSize}, 1fr)`;
+  gridDiv.innerHTML = '';
+
+  for (let r = 0; r < game.gridSize; r++) {
+    for (let c = 0; c < game.gridSize; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const key = `${r}_${c}`;
+      const cards = game.grid[r][c];
+      // Calculate cell number (1-based)
+      const cellNumber = r * game.gridSize + c + 1;
+
+      if (isHidePhase) {
+        // In hide phase, ONLY show cards placed by current player
+        const myCards = cards.filter(cd => cd.playerIdx === game.currentHidingPlayer);
+        let html = `<span class="cell-number">${cellNumber}</span>`;
+        if (myCards.length > 0) {
+          cell.classList.add('has-cards');
+          // Show card name instead of count
+          myCards.forEach(card => {
+            const cardName = card.type === 'main' ? `⭐${card.text}` : card.text;
+            html += `<span class="card-count" style="font-size:9px;">${cardName}</span><br>`;
+          });
+        }
+        // DO NOT show other players' cards - maintain privacy for offline play
+        cell.innerHTML = html;
+        cell.onclick = () => placeCard(r, c);
+      } else {
+        // Reveal phase
+        if (game.revealedCells.has(key)) {
+          cell.classList.add('revealed');
+          let html = `<span class="cell-number">${cellNumber}</span><div class="cell-cards">`;
+          cards.forEach(cd => {
+            let typeClass = 'universal-card';
+            if (cd.type === 'main') typeClass = 'main-card';
+            else if (cd.type === 'personal') typeClass = 'personal-card';
+            else if (cd.type === 'universal_exclude') typeClass = 'universal-card';
+            else if (cd.type === 'universal_relocate') typeClass = 'universal-card';
+            else if (cd.type === 'universal_custom') typeClass = 'universal-card';
+            const owner = game.players[cd.playerIdx];
+            const prefix = cd.type === 'main' ? '⭐' : '';
+            html += `<div class="card-item ${typeClass}" title="${owner.name}: ${cd.text}">${prefix}${cd.text.substring(0, 4)}</div>`;
+          });
+          html += '</div>';
+          cell.innerHTML = html;
+        } else {
+          cell.classList.add('hidden-card');
+          let cellContent = `<span class="cell-number">${cellNumber}</span><br><span style="font-size:16px;">?</span>`;
+          
+          // Relocate mode: highlight source and targets
+          if (game.isRelocating && game.relocatingPlayerIdx === game.currentRevealPlayer) {
+            // Don't show the source position, but allow clicking it to keep current position
+            if (!game.revealedCells.has(key)) {
+              cell.classList.add('relocate-target');
+            }
+          }
+          
+          cell.innerHTML = cellContent;
+          
+          if (game.isRelocating && game.relocatingPlayerIdx === game.currentRevealPlayer) {
+            cell.onclick = () => completeRelocate(r, c);
+          } else {
+            cell.onclick = () => revealCard(r, c);
+          }
+        }
+      }
+      gridDiv.appendChild(cell);
+    }
+  }
+}
+
+function placeCard(r, c) {
+  if (game.selectedHandCard === null) { alert('请先选择一张手牌'); return; }
+  const player = game.players[game.currentHidingPlayer];
+  const card = player.hand[game.selectedHandCard];
+  if (card.placed) return;
+
+  // Check: max 1 card per player per cell
+  const existing = game.grid[r][c].filter(cd => cd.playerIdx === game.currentHidingPlayer);
+  if (existing.length >= 1) { alert('每个格子你最多只能放1张牌'); return; }
+
+  game.grid[r][c].push({ playerIdx: game.currentHidingPlayer, type: card.type, text: card.text });
+  card.placed = true;
+  
+  // Save the index of the placed card for potential auto-selection logic
+  const placedCardIdx = game.selectedHandCard;
+  game.selectedHandCard = null;
+  game.hideHistory.push({ player: game.currentHidingPlayer, row: r, col: c, cardIdx: placedCardIdx });
+
+  // Auto-select next unplaced card
+  const remaining = player.hand.filter(c => !c.placed).length;
+  if (remaining > 0) {
+    const nextUnplacedIdx = player.hand.findIndex((c, idx) => !c.placed && idx > placedCardIdx);
+    if (nextUnplacedIdx !== -1) {
+      game.selectedHandCard = nextUnplacedIdx;
+    } else {
+      // Wrap around to first unplaced card
+      const firstUnplacedIdx = player.hand.findIndex(c => !c.placed);
+      if (firstUnplacedIdx !== -1) {
+        game.selectedHandCard = firstUnplacedIdx;
+      }
+    }
+  }
+
+  renderHidePhase();
+}
+
+function undoLastPlace() {
+  if (game.hideHistory.length === 0) return;
+  const last = game.hideHistory[game.hideHistory.length - 1];
+  if (last.player !== game.currentHidingPlayer) return;
+  
+  // Remove from grid
+  game.grid[last.row][last.col] = game.grid[last.row][last.col].filter(cd => cd.playerIdx !== last.player);
+  // Un-place card
+  const player = game.players[last.player];
+  player.hand[last.cardIdx].placed = false;
+  game.hideHistory.pop();
+  
+  // Auto-select the undone card
+  game.selectedHandCard = last.cardIdx;
+  
+  renderHidePhase();
+}
+
+function confirmHiding() {
+  const player = game.players[game.currentHidingPlayer];
+  const remaining = player.hand.filter(c => !c.placed).length;
+  if (remaining > 0) {
+    if (!confirm(`你还有 ${remaining} 张牌未放置，确定要继续？`)) return;
+  }
+
+  game.currentHidingPlayer++;
+  game.selectedHandCard = null;
+  game.hideHistory = [];
+
+  if (game.currentHidingPlayer >= game.players.length) {
+    // All players done hiding, start reveal phase
+    game.phase = 'reveal';
+    game.currentRevealPlayer = 0;
+    showScreen('screen-reveal');
+    renderRevealPhase();
+  } else {
+    showPrivacyOverlay();
+  }
+}
+
+// ==================== Reveal Phase ====================
+// Helper function to generate a comfortable background color from player color
+function getPlayerBackgroundColor(playerColor) {
+  // Convert hex to RGB
+  const hex = playerColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Create a darker but still visible version for background (reduce brightness by ~50%)
+  const bgR = Math.floor(r * 0.5);
+  const bgG = Math.floor(g * 0.5);
+  const bgB = Math.floor(b * 0.5);
+  
+  return `rgb(${bgR}, ${bgG}, ${bgB})`;
+}
+
+function renderRevealPhase() {
+  const player = game.players[game.currentRevealPlayer];
+  
+  // Update top fixed bar
+  document.getElementById('topPlayerInfo').textContent = `当前玩家: ${player.name}`;
+  document.getElementById('topPlayerInfo').style.color = player.color;
+  let phaseText = '点击格子翻牌';
+  if (game.isRelocating) phaseText = '重新放置主牌';
+  else if (game.extraTurns > 0) phaseText = `额外翻牌（剩余${game.extraTurns}次）`;
+  else if (game.eliminated.has(game.currentRevealPlayer)) phaseText = '该玩家已出局';
+  document.getElementById('topPhaseInfo').textContent = phaseText;
+  
+  // Update top fixed bar background color to match current player
+  const topBar = document.querySelector('.fixed-top-bar');
+  if (topBar) {
+    topBar.style.backgroundColor = getPlayerBackgroundColor(player.color);
+  }
+  
+  // Update status bar in main area (reveal phase)
+  document.getElementById('revealCurrentPlayer').textContent = `${player.name} 翻牌中`;
+  document.getElementById('revealCurrentPlayer').style.color = player.color;
+  
+  // Update status bar background color to match current player
+  // Use the parent container of revealCurrentPlayer to target the correct status-bar
+  const revealStatusBar = document.getElementById('revealCurrentPlayer').closest('.status-bar');
+  if (revealStatusBar) {
+    const bgColor = getPlayerBackgroundColor(player.color);
+    console.log(`Setting reveal status-bar background for ${player.name}: ${player.color} -> ${bgColor}`);
+    revealStatusBar.style.backgroundColor = bgColor;
+  }
+  
+  let infoText = '点击格子翻牌';
+  if (game.isRelocating) {
+    infoText = `请为「${player.name}」选择主牌的新位置（高亮格子为新位置）`;
+  } else if (game.extraTurns > 0) {
+    infoText = `请${player.name}再点击一个格子（剩余${game.extraTurns}次）`;
+  } else if (game.eliminated.has(game.currentRevealPlayer)) {
+    infoText = '该玩家已出局';
+  }
+  document.getElementById('revealPhaseInfo').textContent = infoText;
+
+  // Player tabs in sidebar
+  const tabsDiv = document.getElementById('playerTabs');
+  tabsDiv.innerHTML = '';
+  game.players.forEach((p, i) => {
+    const tab = document.createElement('div');
+    tab.className = `player-tab${i === game.currentRevealPlayer ? ' active' : ''}${game.eliminated.has(i) ? ' eliminated' : ''}`;
+    tab.textContent = p.name;
+    tab.style.borderColor = i === game.currentRevealPlayer ? p.color : 'transparent';
+    if (i === game.currentRevealPlayer) {
+      tab.style.backgroundColor = getPlayerBackgroundColor(p.color);
+    }
+    if (!game.eliminated.has(i) && !game.isRelocating) {
+      tab.onclick = () => { game.currentRevealPlayer = i; renderRevealPhase(); };
+    }
+    tabsDiv.appendChild(tab);
+  });
+
+  // Scoreboard in sidebar
+  const scoreDiv = document.getElementById('sidebarScoreboard');
+  let scoreHtml = '';
+  game.players.forEach((p, i) => {
+    const status = game.eliminated.has(i) ? ' ❌' : '';
+    scoreHtml += `<div class="score-row">
+      <span class="player-name" style="color:${p.color}">${p.name}${status}</span>
+      <span class="player-score">${game.scores[i]}</span>
+    </div>`;
+  });
+  scoreDiv.innerHTML = scoreHtml;
+
+  // Grid
+  renderGrid('revealGrid', false);
+
+  // Log
+  const logDiv = document.getElementById('logArea');
+  logDiv.innerHTML = game.logs.map(l => `<div class="log-entry${l.important ? ' important' : ''}">${l.text}</div>`).join('');
+  logDiv.scrollTop = logDiv.scrollHeight;
+  
+  // Handle next player button visibility
+  const nextBtn = document.querySelector('.next-player-btn');
+  if (nextBtn) {
+    if (game.isRelocating || game.gameEnded) {
+      nextBtn.style.display = 'none';
+    } else {
+      nextBtn.style.display = '';
+    }
+  }
+}
+
+// Auto switch to next player
+function autoSwitchPlayer() {
+  if (game.gameEnded || game.isRelocating) return;
+  if (game.extraTurns > 0) return; // Don't auto switch during extra turns
+  
+  let nextPlayer = (game.currentRevealPlayer + 1) % game.players.length;
+  let attempts = 0;
+  while (game.eliminated.has(nextPlayer) && attempts < game.players.length) {
+    nextPlayer = (nextPlayer + 1) % game.players.length;
+    attempts++;
+  }
+  if (attempts >= game.players.length) return;
+  
+  game.currentRevealPlayer = nextPlayer;
+  renderRevealPhase();
+}
+
+// Switch to next player manually (circular, skip eliminated)
+function switchToNextPlayer() {
+  autoSwitchPlayer();
+}
+
+function revealCard(r, c) {
+  if (game.gameEnded) return;
+  if (game.isRelocating) return; // Should not reveal during relocate
+  if (game.eliminated.has(game.currentRevealPlayer)) { alert('该玩家已出局'); return; }
+  
+  const key = `${r}_${c}`;
+  if (game.revealedCells.has(key)) return;
+
+  const cards = game.grid[r][c];
+  const revealer = game.currentRevealPlayer;
+  const cellNum = r * game.gridSize + c + 1;
+  
+  game.revealedCells.add(key);
+  
+  // Consume one extra turn when flipping a card
+  if (game.extraTurns > 0) {
+    game.extraTurns--;
+  }
+  
+  let logParts = [];
+  let mainCardFound = false;
+  
+  cards.forEach(cd => {
+    if (cd.type === 'main') {
+      if (cd.playerIdx === revealer) {
+        game.logs.push({ text: `💥 ${game.players[revealer].name} 在格子${cellNum}翻到了自己的主牌「${cd.text}」！出局！`, important: true });
+        game.eliminated.add(revealer);
+        mainCardFound = true;
+        if (game.mode === 'mine') {
+          checkMineElimination();
+        } else {
+          checkFindGameEnd();
+        }
+      } else {
+        game.scores[revealer]++;
+        game.logs.push({ text: `🎯 ${game.players[revealer].name} 在格子${cellNum}翻到了 ${game.players[cd.playerIdx].name} 的主牌「${cd.text}」！`, important: true });
+        mainCardFound = true;
+        if (game.mode === 'mine') {
+          game.eliminated.add(revealer);
+          game.logs.push({ text: `💥 ${game.players[revealer].name} 踩雷出局！`, important: true });
+          checkMineElimination();
+        } else {
+          checkFindGameEnd();
+        }
+      }
+    } else if (cd.type === 'universal_exclude') {
+      game.logs.push({ text: `🚫 ${game.players[revealer].name} 在格子${cellNum}翻开了「排除一个」！获得额外翻牌机会`, important: true });
+    } else if (cd.type === 'universal_relocate') {
+      game.logs.push({ text: `🔄 ${game.players[revealer].name} 在格子${cellNum}翻开了「重新放置」！`, important: true });
+    } else {
+      const owner = game.players[cd.playerIdx];
+      const typeLabel = cd.type === 'universal_custom' ? '通用牌' : cd.type === 'personal' ? '个人牌' : '通用牌';
+      game.logs.push({ text: `${game.players[revealer].name} 在格子${cellNum}翻开了 ${owner.name}的${typeLabel}「${cd.text}」`, important: false });
+    }
+  });
+  
+  // Empty cell
+  if (cards.length === 0) {
+    game.logs.push({ text: `${game.players[revealer].name} 翻开了格子${cellNum} - 空的`, important: false });
+  }
+  
+  renderRevealPhase();
+  
+  // Check if game ended
+  if (game.gameEnded) return;
+  
+  // Execute special card effects in sequence
+  // Count all special cards and execute them one by one
+  let excludeCount = 0;
+  let relocateCount = 0;
+  
+  cards.forEach(cd => {
+    if (cd.type === 'universal_exclude') {
+      excludeCount++;
+    } else if (cd.type === 'universal_relocate') {
+      relocateCount++;
+    }
+  });
+  
+  // If player is eliminated, no special effects apply
+  if (game.eliminated.has(revealer)) {
+    // No special effects - auto switch immediately
+    if (!game.gameEnded) {
+      autoSwitchPlayer();
+    }
+    // Check if all main cards have been revealed (for find mode)
+    if (game.mode === 'find') {
+      checkAllMainCardsRevealed();
+    }
+    return;
+  }
+  
+  // Add extra turns for each "exclude one" card
+  if (excludeCount > 0) {
+    game.extraTurns += excludeCount;
+  }
+  
+  // Mark pending relocate cards count (but don't enter mode yet)
+  if (relocateCount > 0) {
+    game.pendingRelocateCount += relocateCount;
+  }
+  
+  // If player has extra turns, refresh UI to let them flip more cards
+  if (game.extraTurns > 0) {
+    renderRevealPhase();
+    return; // Don't auto switch or enter relocate yet
+  }
+  
+  // No extra turns - check if there are pending relocate cards
+  if (game.pendingRelocateCount > 0) {
+    game.pendingRelocateCount--;
+    enterRelocateMode(revealer);
+    return;
+  }
+  
+  // No special effects remaining - auto switch player
+  if (!game.gameEnded) {
+    autoSwitchPlayer();
+  }
+  
+  // Check if all main cards have been revealed (for find mode)
+  if (game.mode === 'find') {
+    checkAllMainCardsRevealed();
+  }
+}
+
+function checkMineElimination() {
+  const alive = game.players.filter((_, i) => !game.eliminated.has(i));
+  if (alive.length <= 1) {
+    const winner = alive[0];
+    const winnerIdx = game.players.indexOf(winner);
+    endGameWithResult(`${winner.name} 获胜！`, `排雷模式 - 最后的幸存者`);
+  }
+}
+
+// Check if all main cards have been revealed
+function checkAllMainCardsRevealed() {
+  let totalMainCards = game.players.length; // Each player has 1 main card
+  let revealedMainCards = 0;
+  
+  // Count revealed main cards
+  for (let r = 0; r < game.gridSize; r++) {
+    for (let c = 0; c < game.gridSize; c++) {
+      const key = `${r}_${c}`;
+      if (game.revealedCells.has(key)) {
+        const cards = game.grid[r][c];
+        cards.forEach(card => {
+          if (card.type === 'main') {
+            revealedMainCards++;
+          }
+        });
+      }
+    }
+  }
+  
+  // If all main cards are revealed, determine winner
+  if (revealedMainCards >= totalMainCards) {
+    // Find player with most found main cards
+    let maxScore = -1;
+    let winners = [];
+    
+    game.players.forEach((p, i) => {
+      if (!game.eliminated.has(i)) {
+        if (game.scores[i] > maxScore) {
+          maxScore = game.scores[i];
+          winners = [p.name];
+        } else if (game.scores[i] === maxScore) {
+          winners.push(p.name);
+        }
+      }
+    });
+    
+    if (winners.length === 0) {
+      endGameWithResult('游戏结束', '所有玩家都已出局！');
+    } else if (winners.length === 1) {
+      endGameWithResult(`${winners[0]} 获胜！`, `找人模式 - 找到最多主牌（${maxScore}张）`);
+    } else {
+      endGameWithResult(`${winners.join('、')} 并列获胜！`, `找人模式 - 都找到 ${maxScore} 张主牌`);
+    }
+  }
+}
+
+function checkFindGameEnd() {
+  // In find mode with 2 players: if someone found opponent's main card, they win
+  if (game.players.length === 2) {
+    for (let i = 0; i < game.players.length; i++) {
+      if (game.scores[i] > 0) {
+        endGameWithResult(`${game.players[i].name} 获胜！`, `找到了 ${game.players[i].name === game.players[0].name ? game.players[1].name : game.players[0].name} 的主牌`);
+        return;
+      }
+    }
+    // Check if someone lost (found own main card)
+    for (let i = 0; i < game.players.length; i++) {
+      if (game.eliminated.has(i)) {
+        const other = i === 0 ? 1 : 0;
+        endGameWithResult(`${game.players[other].name} 获胜！`, `${game.players[i].name} 翻到了自己的主牌`);
+        return;
+      }
+    }
+  } else {
+    // 3+ players: check if all main cards have been found or all but one eliminated
+    const alive = game.players.filter((_, i) => !game.eliminated.has(i));
+    if (alive.length <= 1) {
+      const winner = alive[0];
+      endGameWithResult(`${winner.name} 获胜！`, `找人模式 - 淘汰赛`);
+    }
+  }
+}
+
+// ==================== Relocate Mode ====================
+function enterRelocateMode(playerIdx) {
+  game.isRelocating = true;
+  game.relocatingPlayerIdx = playerIdx;
+  
+  // Find the player's main card on the grid
+  let found = false;
+  for (let r = 0; r < game.gridSize; r++) {
+    for (let c = 0; c < game.gridSize; c++) {
+      const cards = game.grid[r][c];
+      for (const cd of cards) {
+        if (cd.type === 'main' && cd.playerIdx === playerIdx) {
+          game.relocateSource = { r, c };
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (found) break;
+  }
+  
+  if (!found) {
+    // Main card already revealed, can't relocate
+    game.logs.push({ text: `ℹ️ ${game.players[playerIdx].name} 的主牌已被翻开，无法重新放置`, important: false });
+    game.isRelocating = false;
+    game.relocatingPlayerIdx = null;
+    game.relocateSource = null;
+    // Auto switch immediately
+    autoSwitchPlayer();
+    renderRevealPhase();
+    return;
+  }
+  
+  game.logs.push({ text: `🔄 ${game.players[playerIdx].name} 正在重新放置主牌...`, important: true });
+  renderRevealPhase();
+}
+
+function completeRelocate(targetR, targetC) {
+  if (!game.isRelocating) return;
+  
+  const source = game.relocateSource;
+  const playerIdx = game.relocatingPlayerIdx;
+  
+  // Check if user clicked on the original position (keep current position)
+  if (source && source.r === targetR && source.c === targetC) {
+    game.logs.push({ text: `🔄 ${game.players[playerIdx].name} 已将主牌重新放置`, important: true });
+    
+    // Reset relocate state
+    game.isRelocating = false;
+    game.relocatingPlayerIdx = null;
+    game.relocateSource = null;
+    
+    renderRevealPhase();
+    
+    // After relocate decision, check if there are more pending relocate cards
+    if (game.pendingRelocateCount > 0) {
+      game.pendingRelocateCount--;
+      enterRelocateMode(playerIdx);
+      return;
+    }
+    
+    // No more pending effects, auto switch player
+    if (!game.gameEnded) {
+      autoSwitchPlayer();
+    }
+    return;
+  }
+  
+  // Can't place on already revealed cell
+  const targetKey = `${targetR}_${targetC}`;
+  if (game.revealedCells.has(targetKey)) { alert('不能放在已翻开的格子中'); return; }
+  
+  // Check if player already has a card in target cell
+  const existing = game.grid[targetR][targetC].filter(cd => cd.playerIdx === playerIdx);
+  if (existing.length >= 1) { alert('该格子你已经有牌了'); return; }
+  
+  // Find and move the main card
+  const sourceCards = game.grid[source.r][source.c];
+  const mainCardIdx = sourceCards.findIndex(cd => cd.type === 'main' && cd.playerIdx === playerIdx);
+  if (mainCardIdx === -1) return;
+  
+  const mainCard = sourceCards[mainCardIdx];
+  sourceCards.splice(mainCardIdx, 1);
+  game.grid[targetR][targetC].push({ ...mainCard });
+  
+  game.logs.push({ text: `🔄 ${game.players[playerIdx].name} 已将主牌重新放置`, important: true });
+  
+  // Reset relocate state
+  game.isRelocating = false;
+  game.relocatingPlayerIdx = null;
+  game.relocateSource = null;
+  
+  renderRevealPhase();
+  
+  // Check game end
+  if (game.mode === 'find') {
+    checkAllMainCardsRevealed();
+  }
+  
+  // After relocate, check if there are more pending relocate cards
+  if (game.pendingRelocateCount > 0) {
+    game.pendingRelocateCount--;
+    enterRelocateMode(playerIdx);
+    return;
+  }
+  
+  // No more pending effects, auto switch player
+  if (!game.gameEnded) {
+    autoSwitchPlayer();
+  }
+}
+
+function endGameWithResult(title, details) {
+  game.gameEnded = true;
+  setTimeout(() => {
+    // Reveal all cards
+    revealAllCards();
+    
+    // Show result area
+    document.getElementById('resultTitle').textContent = title;
+    let detailHtml = `<p style="font-size:1.2em; margin-bottom:15px;">${details}</p>`;
+    detailHtml += '<strong>最终计分：</strong><br>';
+    game.players.forEach((p, i) => {
+      const status = game.eliminated.has(i) ? ' ❌出局' : ' ✅存活';
+      detailHtml += `${p.name}${status}: 找到 ${game.scores[i]} 张主牌<br>`;
+    });
+    document.getElementById('resultDetails').innerHTML = detailHtml;
+    document.getElementById('gameResult').style.display = 'block';
+    
+    // Scroll to result
+    document.getElementById('gameResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 500);
+}
+
+// Reveal all cards on the grid
+function revealAllCards() {
+  // Mark all cells as revealed
+  for (let r = 0; r < game.gridSize; r++) {
+    for (let c = 0; c < game.gridSize; c++) {
+      const key = `${r}_${c}`;
+      if (!game.revealedCells.has(key)) {
+        game.revealedCells.add(key);
+      }
+    }
+  }
+  // Re-render the grid to show all cards
+  renderRevealPhase();
+}
+
+function endGame() {
+  if (!confirm('确定要结束游戏吗？')) return;
+  
+  game.gameEnded = true;
+  
+  // Reveal all cards
+  revealAllCards();
+  
+  let detailHtml = '<strong>最终计分：</strong><br>';
+  game.players.forEach((p, i) => {
+    const status = game.eliminated.has(i) ? ' ❌出局' : ' ✅存活';
+    detailHtml += `${p.name}${status}: 找到 ${game.scores[i]} 张主牌<br>`;
+  });
+
+  // Determine winner by score
+  let maxScore = -1;
+  let winners = [];
+  game.players.forEach((p, i) => {
+    if (!game.eliminated.has(i) && game.scores[i] > maxScore) {
+      maxScore = game.scores[i];
+      winners = [p.name];
+    } else if (!game.eliminated.has(i) && game.scores[i] === maxScore) {
+      winners.push(p.name);
+    }
+  });
+
+  if (winners.length === 0) {
+    document.getElementById('resultTitle').textContent = ' 游戏结束';
+    detailHtml = '<p style="font-size:1.2em; margin-bottom:15px;">所有玩家都已出局！</p>' + detailHtml;
+    // Save game results with no winners
+    saveGameResults([], []);
+    checkAndUpdateArchives();
+  } else {
+    document.getElementById('resultTitle').textContent = `🏆 ${winners.join('、')} 获胜！`;
+    // Save game results with winners
+    const winnerIds = [];
+    winners.forEach(wn => {
+      const player = game.players.find(p => p.name === wn);
+      if (player && player.archiveId) winnerIds.push(player.archiveId);
+    });
+    saveGameResults(winners, winnerIds);
+    checkAndUpdateArchives();
+  }
+  document.getElementById('resultDetails').innerHTML = detailHtml;
+  document.getElementById('gameResult').style.display = 'block';
+  
+  // Scroll to result
+  document.getElementById('gameResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Initialize card preview on page load
+window.addEventListener('DOMContentLoaded', function() {
+  // Initialize universal card inputs first (if default value > 0)
+  updateUniversalCardInputs();
+  // Then initialize card preview
+  updateCardPreview();
+  // Initialize player archive selector
+  refreshPlayerArchive();
+});
+
+// ==================== Player Database (localStorage) ====================
+const PLAYERS_DB_KEY = 'cardGamePlayers';
+const LEADERBOARD_KEY = 'cardGameLeaderboard';
+
+function getPlayersDB() {
+  try {
+    const data = localStorage.getItem(PLAYERS_DB_KEY);
+    if (data) return JSON.parse(data);
+  } catch(e) {}
+  return { version: 1, players: [] };
+}
+
+function savePlayersDB(db) {
+  localStorage.setItem(PLAYERS_DB_KEY, JSON.stringify(db));
+}
+
+function getLeaderboard() {
+  try {
+    const data = localStorage.getItem(LEADERBOARD_KEY);
+    if (data) return JSON.parse(data);
+  } catch(e) {}
+  return { version: 1, lastUpdated: null, games: [], playerStats: {} };
+}
+
+function saveLeaderboard(lb) {
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(lb));
+}
+
+// ==================== Player Archive UI ====================
+let selectedArchivePlayers = []; // Array of player IDs selected from archive
+
+function refreshPlayerArchive() {
+  const db = getPlayersDB();
+  const container = document.getElementById('playerArchiveSelect');
+  
+  // Trim selected players if count decreased
+  const count = parseInt(document.getElementById('playerCount').value) || 2;
+  while (selectedArchivePlayers.length > count) {
+    selectedArchivePlayers.pop();
+  }
+  
+  if (db.players.length === 0) {
+    container.innerHTML = '<p style="color:#aaa; font-size:0.9em;">还没有玩家档案，点击下方“新建玩家”创建</p>';
+    return;
+  }
+  
+  let html = '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+  db.players.forEach((p, idx) => {
+    const isSelected = selectedArchivePlayers.includes(p.id);
+    const stats = getPlayerStats(p.id);
+    html += `<div class="player-archive-tag" onclick="toggleArchivePlayer('${p.id}')" 
+      style="padding:8px 14px; border-radius:8px; cursor:pointer; transition:all 0.2s;
+      background:${isSelected ? p.color : '#0f3460'}; color:#fff; border:2px solid ${isSelected ? '#fff' : 'transparent'};
+      display:flex; align-items:center; gap:6px;">
+      <span style="width:12px;height:12px;border-radius:50%;background:${p.color};display:inline-block;"></span>
+      <span>${p.name}</span>
+      <span style="font-size:0.8em; opacity:0.7;">(${stats.wins}胜/${stats.gamesPlayed}局)</span>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Refresh archive management page (full list)
+function refreshArchiveManagement() {
+  const db = getPlayersDB();
+  const container = document.getElementById('archiveManagement');
+  
+  if (db.players.length === 0) {
+    container.innerHTML = '<p style="color:#aaa; text-align:center; padding:40px;">还没有玩家档案，点击“新建玩家”创建</p>';
+    return;
+  }
+  
+  let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px;">';
+  db.players.forEach(p => {
+    const stats = getPlayerStats(p.id);
+    html += `<div style="background:#0f3460; border-radius:10px; padding:15px; border-left:4px solid ${p.color};">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="width:16px;height:16px;border-radius:50%;background:${p.color};display:inline-block;"></span>
+        <strong style="font-size:1.1em;">${p.name}</strong>
+      </div>
+      <div style="font-size:0.9em; color:#aaa; margin-bottom:5px;">主牌：${p.mainCard}</div>
+      <div style="font-size:0.9em; color:#aaa;">战绩：${stats.wins}胜 / ${stats.gamesPlayed}局</div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Fix player stats for specific players
+function fixPlayerStats() {
+  const lb = getLeaderboard();
+  const db = getPlayersDB();
+  
+  if (!lb.playerStats) lb.playerStats = {};
+  
+  // Find and update 哈基米酱
+  const hkm = db.players.find(p => p.name === "哈基米酱");
+  if (hkm) {
+    if (!lb.playerStats[hkm.id]) lb.playerStats[hkm.id] = { wins: 0, gamesPlayed: 0 };
+    lb.playerStats[hkm.id].wins = 1;
+    lb.playerStats[hkm.id].gamesPlayed = 2;
+  }
+  
+  // Find and update 蚕虫糖酱
+  const cct = db.players.find(p => p.name === "蚕虫糖酱");
+  if (cct) {
+    if (!lb.playerStats[cct.id]) lb.playerStats[cct.id] = { wins: 0, gamesPlayed: 0 };
+    lb.playerStats[cct.id].wins = 1;
+    lb.playerStats[cct.id].gamesPlayed = 2;
+  }
+  
+  saveLeaderboard(lb);
+  alert("✅ 数据已修复！\n\n哈基米酱: 1胜/2局\n蚕虫糖酱: 1胜/2局\n\n刷新页面查看效果。");
+}
+
+function toggleArchivePlayer(playerId) {
+  const idx = selectedArchivePlayers.indexOf(playerId);
+  if (idx !== -1) {
+    selectedArchivePlayers.splice(idx, 1);
+  } else {
+    const count = parseInt(document.getElementById('playerCount').value) || 2;
+    if (selectedArchivePlayers.length >= count) {
+      alert(`最多选择 ${count} 名玩家（与玩家人数一致）`);
+      return;
+    }
+    selectedArchivePlayers.push(playerId);
+  }
+  refreshPlayerArchive();
+}
+
+function trimSelectedArchivePlayers() {
+  refreshPlayerArchive();
+}
+
+function fillPlayerFromArchive(playerIdx, archiveId) {
+  const db = getPlayersDB();
+  const archivedPlayer = archiveId ? db.players.find(p => p.id === archiveId) : null;
+  
+  if (!archivedPlayer) {
+    // Clear selection - reset to default
+    document.getElementById(`pname_${playerIdx}`).value = `玩家${playerIdx + 1}`;
+    document.getElementById(`pmain_${playerIdx}`).value = '主牌';
+    // Reset border color
+    const setupDiv = document.getElementById(`setup-player-${playerIdx}`);
+    if (setupDiv) {
+      setupDiv.style.borderLeftColor = COLORS[playerIdx % COLORS.length];
+      setupDiv.removeAttribute('data-archive-id');
+      // Update title color and remove archive icon
+      const h3 = setupDiv.querySelector('h3');
+      if (h3) {
+        h3.style.color = COLORS[playerIdx % COLORS.length];
+        h3.textContent = `玩家 ${playerIdx + 1}`;
+      }
+    }
+    return;
+  }
+  
+  // Fill from archive
+  document.getElementById(`pname_${playerIdx}`).value = archivedPlayer.name;
+  document.getElementById(`pmain_${playerIdx}`).value = archivedPlayer.mainCard;
+  
+  // Update border color
+  const setupDiv = document.getElementById(`setup-player-${playerIdx}`);
+  if (setupDiv) {
+    setupDiv.style.borderLeftColor = archivedPlayer.color;
+    setupDiv.setAttribute('data-archive-id', archivedPlayer.id);
+    // Update title color and add archive icon
+    const h3 = setupDiv.querySelector('h3');
+    if (h3) {
+      h3.style.color = archivedPlayer.color;
+      h3.textContent = `玩家 ${playerIdx + 1} 📁`;
+    }
+  }
+}
+
+function getPlayerStats(playerId) {
+  const lb = getLeaderboard();
+  const stats = lb.playerStats[playerId];
+  if (!stats) return { wins: 0, gamesPlayed: 0, winRate: 0 };
+  return {
+    wins: stats.wins || 0,
+    gamesPlayed: stats.gamesPlayed || 0,
+    winRate: stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0
+  };
+}
+
+// ==================== Create Player Dialog ====================
+let selectedNewPlayerColor = COLORS[0];
+
+function showCreatePlayerDialog() {
+  selectedNewPlayerColor = COLORS[getPlayersDB().players.length % COLORS.length];
+  document.getElementById('newPlayerName').value = '';
+  document.getElementById('newPlayerMainCard').value = '主牌';
+  
+  // Render color options
+  const colorsDiv = document.getElementById('newPlayerColors');
+  colorsDiv.innerHTML = '';
+  COLORS.forEach(c => {
+    const div = document.createElement('div');
+    div.style.cssText = `width:30px;height:30px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${c === selectedNewPlayerColor ? '#fff' : 'transparent'};transition:all 0.2s;`;
+    div.onclick = () => {
+      selectedNewPlayerColor = c;
+      colorsDiv.querySelectorAll('div').forEach(d => d.style.borderColor = 'transparent');
+      div.style.borderColor = '#fff';
+    };
+    colorsDiv.appendChild(div);
+  });
+  
+  document.getElementById('createPlayerOverlay').style.display = 'flex';
+}
+
+function hideCreatePlayerDialog() {
+  document.getElementById('createPlayerOverlay').style.display = 'none';
+}
+
+function createNewPlayer() {
+  const name = document.getElementById('newPlayerName').value.trim();
+  const mainCard = document.getElementById('newPlayerMainCard').value.trim() || '主牌';
+  
+  if (!name) { alert('请输入玩家名称'); return; }
+  
+  const db = getPlayersDB();
+  
+  // Check duplicate name
+  if (db.players.some(p => p.name === name)) {
+    alert('该名称已存在，请换一个名称');
+    return;
+  }
+  
+  const newPlayer = {
+    id: 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    name: name,
+    mainCard: mainCard,
+    color: selectedNewPlayerColor,
+    createdAt: new Date().toISOString()
+  };
+  
+  db.players.push(newPlayer);
+  savePlayersDB(db);
+  
+  hideCreatePlayerDialog();
+  refreshPlayerArchive();
+  alert(`✅ 玩家“${name}”创建成功！`);
+}
+
+// ==================== Modify goToPlayerSetup to use archive ====================
+const originalGoToPlayerSetup = goToPlayerSetup;
+goToPlayerSetup = function() {
+  const count = parseInt(document.getElementById('playerCount').value);
+  if (count < 2) { alert('至少需要2名玩家'); return; }
+  
+  // Initialize universal card inputs
+  updateUniversalCardInputs();
+  updateCardPreview();
+  
+  const db = getPlayersDB();
+  const container = document.getElementById('playerSetups');
+  container.innerHTML = '';
+  
+  for (let i = 0; i < count; i++) {
+    // Check if we have an archived player for this slot
+    const archivedPlayer = selectedArchivePlayers.length > i ? db.players.find(p => p.id === selectedArchivePlayers[i]) : null;
+    
+    const defaultName = archivedPlayer ? archivedPlayer.name : `玩家${i + 1}`;
+    const defaultMain = archivedPlayer ? archivedPlayer.mainCard : '主牌';
+    const fromArchive = archivedPlayer ? ` data-archive-id="${archivedPlayer.id}"` : '';
+    const borderColor = archivedPlayer ? archivedPlayer.color : COLORS[i % COLORS.length];
+    const titleColor = archivedPlayer ? archivedPlayer.color : COLORS[i % COLORS.length];
+    
+    // Build archive select options
+    let archiveOptions = '<option value="">-- 从档案选择 --</option>';
+    db.players.forEach(p => {
+      const stats = getPlayerStats(p.id);
+      const selected = archivedPlayer && p.id === archivedPlayer.id ? 'selected' : '';
+      archiveOptions += `<option value="${p.id}" ${selected}>${p.name} (${stats.wins}胜/${stats.gamesPlayed}局)</option>`;
+    });
+    
+    container.innerHTML += `
+      <div class="player-setup" style="border-left-color:${borderColor}" id="setup-player-${i}"${fromArchive}>
+        <h3 style="color:${titleColor}">玩家 ${i + 1}${archivedPlayer ? ' 📁' : ''}</h3>
+        <div class="form-group">
+          <label> 从档案选择</label>
+          <select onchange="fillPlayerFromArchive(${i}, this.value)" style="width:100%; padding:10px; border:1px solid #333; border-radius:8px; background:#16213e; color:#eee; font-size:16px;">
+            ${archiveOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>玩家名称</label>
+          <input type="text" id="pname_${i}" value="${defaultName}" placeholder="输入名称">
+        </div>
+        <div class="form-group">
+          <label>主牌名称（代表你的身份）</label>
+          <input type="text" id="pmain_${i}" placeholder="例如：小明的主牌" value="${defaultMain}">
+        </div>
+      </div>`;
+  }
+  showScreen('screen-players');
+};
+
+// ==================== Leaderboard Page ====================
+function showLeaderboard() {
+  renderLeaderboard();
+  showScreen('screen-leaderboard');
+}
+
+function hideLeaderboard() {
+  showScreen('screen-setup');
+}
+
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const db = getPlayersDB();
+  
+  // Build sorted player list by wins
+  let playerList = [];
+  for (const [id, stats] of Object.entries(lb.playerStats || {})) {
+    const playerInfo = db.players.find(p => p.id === id);
+    if (playerInfo) {
+      playerList.push({
+        id: id,
+        name: playerInfo.name,
+        color: playerInfo.color,
+        wins: stats.wins || 0,
+        gamesPlayed: stats.gamesPlayed || 0,
+        winRate: stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0
+      });
+    }
+  }
+  
+  // Sort by wins descending, then by gamesPlayed ascending
+  playerList.sort((a, b) => b.wins - a.wins || a.gamesPlayed - b.gamesPlayed);
+  
+  // Render TOP 3
+  const topDiv = document.getElementById('topPlayers');
+  if (playerList.length === 0) {
+    topDiv.innerHTML = '<p style="color:#aaa; text-align:center; width:100%;">暂无数据，开始第一局游戏吧！</p>';
+  } else {
+    const medals = ['🥇', '🥈', '🥉'];
+    const classes = ['gold', 'silver', 'bronze'];
+    let topHtml = '';
+    const top3 = playerList.slice(0, 3);
+    top3.forEach((p, idx) => {
+      topHtml += `
+        <div class="top-player-card ${classes[idx] || ''}">
+          <div class="top-player-rank">${medals[idx]}</div>
+          <div class="top-player-name" style="color:${p.color}">${p.name}</div>
+          <div class="top-player-stats">
+            <div class="stat-item">
+              <div class="stat-value">${p.wins}</div>
+              <div class="stat-label">胜局</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${p.gamesPlayed}</div>
+              <div class="stat-label">参与局数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${p.winRate}%</div>
+              <div class="stat-label">胜率</div>
+            </div>
+          </div>
+        </div>`;
+    });
+    topDiv.innerHTML = topHtml;
+  }
+  
+  // Render full table
+  const tbody = document.getElementById('leaderboardBody');
+  let tableHtml = '';
+  playerList.forEach((p, idx) => {
+    const rank = idx + 1;
+    let badgeClass = 'normal';
+    if (rank === 1) badgeClass = 'top1';
+    else if (rank === 2) badgeClass = 'top2';
+    else if (rank === 3) badgeClass = 'top3';
+    
+    tableHtml += `<tr>
+      <td><span class="rank-badge ${badgeClass}">${rank}</span></td>
+      <td><span style="color:${p.color}; font-weight:bold;">${p.name}</span></td>
+      <td style="color:#f1c40f; font-weight:bold;">${p.wins}</td>
+      <td>${p.gamesPlayed}</td>
+      <td>${p.winRate}%</td>
+    </tr>`;
+  });
+  tbody.innerHTML = tableHtml || '<tr><td colspan="5" style="text-align:center; color:#aaa;">暂无数据</td></tr>';
+  
+  // Render game history
+  const historyDiv = document.getElementById('gameHistoryList');
+  const games = lb.games || [];
+  if (games.length === 0) {
+    historyDiv.innerHTML = '<p style="color:#aaa;">暂无历史对局</p>';
+  } else {
+    let historyHtml = '';
+    // Show most recent first
+    [...games].reverse().forEach(g => {
+      const date = new Date(g.date).toLocaleString('zh-CN');
+      let scoresHtml = '';
+      g.scores.forEach(s => {
+        scoresHtml += `<span style="color:${s.color};">${s.name}: ${s.found}张主牌${s.isWinner ? ' 🏆' : ''}${s.eliminated ? ' ❌' : ''}</span>`;
+      });
+      historyHtml += `
+        <div class="history-item">
+          <div class="history-date">${date} · ${g.mode === 'find' ? '找人模式' : '排雷模式'}</div>
+          <div class="history-winner">🏆 ${g.winnerText}</div>
+          <div class="history-scores">${scoresHtml}</div>
+        </div>`;
+    });
+    historyDiv.innerHTML = historyHtml;
+  }
+}
+
+// ==================== Save Game Results ====================
+function saveGameResults(winnerNames, winnerIds) {
+  const lb = getLeaderboard();
+  if (!lb.playerStats) lb.playerStats = {};
+  if (!lb.games) lb.games = [];
+  
+  // Update player stats for all current players
+  game.players.forEach((p, i) => {
+    const archiveId = p.archiveId;
+    if (!archiveId) return; // Skip non-archived players
+    
+    if (!lb.playerStats[archiveId]) {
+      lb.playerStats[archiveId] = { wins: 0, gamesPlayed: 0 };
+    }
+    lb.playerStats[archiveId].gamesPlayed++;
+    
+    // Check if this player is a winner
+    if (winnerIds && winnerIds.includes(archiveId)) {
+      lb.playerStats[archiveId].wins++;
+    }
+  });
+  
+  // Record game history
+  const scoresData = game.players.map((p, i) => ({
+    name: p.name,
+    color: p.color,
+    found: game.scores[i],
+    eliminated: game.eliminated.has(i),
+    isWinner: winnerNames && winnerNames.includes(p.name)
+  }));
+  
+  lb.games.push({
+    date: new Date().toISOString(),
+    mode: game.mode,
+    winnerText: winnerNames ? winnerNames.join('、') : '无',
+    winnerIds: winnerIds || [],
+    scores: scoresData
+  });
+  
+  lb.lastUpdated = new Date().toISOString();
+  saveLeaderboard(lb);
+}
+
+// ==================== Game End Integration ====================
+const originalEndGameWithResult = endGameWithResult;
+endGameWithResult = function(title, details) {
+  // Determine winners before saving
+  let winnerNames = [];
+  let winnerIds = [];
+  
+  // Extract winner name from title (e.g., "小明 获胜！" or "小明、小红 并列获胜！")
+  const winnerMatch = title.match(/^(.+?)\s*(?:获胜|并列获胜)/);
+  if (winnerMatch) {
+    winnerNames = winnerMatch[1].split('、');
+    // Find matching player archive IDs
+    winnerNames.forEach(wn => {
+      const player = game.players.find(p => p.name === wn);
+      if (player && player.archiveId) {
+        winnerIds.push(player.archiveId);
+      }
+    });
+  }
+  
+  // Save to leaderboard
+  saveGameResults(winnerNames, winnerIds);
+  
+  // Check if any player's main card name differs from archive, ask to update
+  checkAndUpdateArchives();
+  
+  // Call original function
+  game.gameEnded = true;
+  setTimeout(() => {
+    revealAllCards();
+    document.getElementById('resultTitle').textContent = title;
+    let detailHtml = `<p style="font-size:1.2em; margin-bottom:15px;">${details}</p>`;
+    detailHtml += '<strong>最终计分：</strong><br>';
+    game.players.forEach((p, i) => {
+      const status = game.eliminated.has(i) ? ' ❌出局' : ' ✅存活';
+      detailHtml += `${p.name}${status}: 找到 ${game.scores[i]} 张主牌<br>`;
+    });
+    document.getElementById('resultDetails').innerHTML = detailHtml;
+    document.getElementById('gameResult').style.display = 'block';
+    document.getElementById('gameResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 500);
+};
+
+function checkAndUpdateArchives() {
+  const db = getPlayersDB();
+  let needsUpdate = false;
+  let updateList = [];
+  
+  game.players.forEach(p => {
+    if (!p.archiveId) return;
+    const archived = db.players.find(ap => ap.id === p.archiveId);
+    if (!archived) return;
+    
+    // Check if main card name changed
+    if (p.mainCard !== archived.mainCard) {
+      needsUpdate = true;
+      updateList.push({ player: p, archived: archived });
+    }
+  });
+  
+  if (needsUpdate) {
+    setTimeout(() => {
+      let msg = '以下玩家的主牌名称与档案不同，是否更新档案？\n';
+      updateList.forEach(u => {
+        msg += `\n${u.player.name}: “${u.archived.mainCard}” → “${u.player.mainCard}”`;
+      });
+      msg += '\n\n点击“确定”更新，点击“取消”保持不变';
+      
+      if (confirm(msg)) {
+        updateList.forEach(u => {
+          const idx = db.players.findIndex(ap => ap.id === u.player.archiveId);
+          if (idx !== -1) {
+            db.players[idx].mainCard = u.player.mainCard;
+          }
+        });
+        savePlayersDB(db);
+      }
+    }, 1000);
+  }
+}
+</script>
+</body>
+</html>
