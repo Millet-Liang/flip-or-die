@@ -955,10 +955,9 @@ function endGameWithResult(title, details) {
     document.getElementById('revealCurrentPlayer').style.color = '#f1c40f';
     // 显示获胜者的历史战绩
     document.getElementById('revealPhaseInfo').textContent = getWinnerStatsText(winnerNames);
-    // 切换按钮：隐藏"下一个玩家"和"结束游戏"，显示"再来一局"
-    const nextBtn = document.querySelector('.next-player-btn');
-    if (nextBtn) nextBtn.style.display = 'none';
-    document.getElementById('btnEndGame').style.display = 'none';
+    // 切换按钮：隐藏"上一个/下一个玩家"，显示"再来一局"和"查看排行榜"
+    document.getElementById('btnPrevPlayer').style.display = 'none';
+    document.querySelector('.next-player-btn').style.display = 'none';
     document.getElementById('btnPlayAgain').style.display = '';
     document.getElementById('btnViewLeaderboard').style.display = '';
   }, 500);

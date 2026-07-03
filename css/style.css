@@ -575,6 +575,77 @@ h3 { color: #e0e0e0; margin-bottom: 10px; }
     padding: 6px 10px;
     font-size: 0.85em;
   }
+  
+  /* 导航栏 */
+  .top-nav {
+    padding: 8px 12px;
+  }
+  .top-nav h1 {
+    font-size: 1.1em;
+  }
+  .nav-buttons {
+    gap: 5px;
+  }
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  /* 内容区 */
+  body { padding-top: 50px; }
+  .screen { padding: 12px; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.2em; }
+  
+  /* 欢迎区 */
+  .welcome-hero { padding: 25px 15px; }
+  .welcome-icon { font-size: 2.5em; }
+  .welcome-title { font-size: 1.1em; }
+  .welcome-desc { font-size: 0.85em; max-width: 100%; }
+  .welcome-start-btn { font-size: 1em !important; padding: 12px 24px !important; }
+  
+  /* 按钮 */
+  .btn { padding: 10px 20px; font-size: 14px; }
+  .btn-row { gap: 8px; justify-content: center; }
+  
+  /* 表单 */
+  .form-group input, .form-group select { font-size: 16px; padding: 10px; }
+  .player-setup { padding: 12px !important; }
+  
+  /* 格子 - 自适应宽度 */
+  .cell { width: auto; height: auto; font-size: 9px; aspect-ratio: 1; min-width: 0; }
+  .cell .cell-number { font-size: 8px; }
+  .cell .cell-cards .card-item { font-size: 6px; max-width: 100%; }
+  .cell .card-count { font-size: 8px; }
+  .grid-container { margin: 10px 0; }
+  .grid { width: 100%; gap: 2px; padding: 2px; }
+  
+  /* 配置卡片 */
+  .config-card { padding: 12px; }
+  
+  /* 手牌区 */
+  .suggestion-tag { font-size: 0.8em; padding: 4px 8px; }
+  
+  /* 弹窗 */
+  .modal-content, #personalCardModal > div, #personalCardRevealModal > div {
+    width: 90% !important;
+    max-width: 90% !important;
+    padding: 15px !important;
+  }
+  
+  /* 状态栏 */
+  .status-bar { padding: 10px; font-size: 0.9em; }
+  
+  /* 翻牌记录 */
+  .log-area { max-height: 150px; font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .top-nav h1 { font-size: 0.95em; }
+  .nav-btn { padding: 5px 8px; font-size: 11px; }
+  .cell .cell-number { font-size: 7px; }
+  .welcome-title { font-size: 1em; }
+  .btn { padding: 8px 16px; font-size: 13px; }
 }
 
 /* ==================== Rules Modal ==================== */
@@ -670,12 +741,6 @@ h3 { color: #e0e0e0; margin-bottom: 10px; }
 
 @media (max-width: 900px) {
   .grid-area { margin-top: 0; }
-}
-@media (max-width: 600px) {
-  .cell { width: 45px; height: 45px; font-size: 10px; }
-  .cell .cell-cards .card-item { font-size: 7px; }
-  .fixed-top-bar { padding: 8px 12px; flex-direction: column; gap: 5px; }
-  .fixed-top-bar .top-player-info { font-size: 1em; }
 }
 
 /* ==================== Toast Notifications ==================== */
